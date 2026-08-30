@@ -749,6 +749,7 @@ export const fetchAllDataFromGoogleSheets = async (
           products: saJson.data.products,
           invoices: saJson.data.invoices,
           customers: saJson.data.customers,
+          settings: saJson.data.settings,
           stats: {
             productsCount: saJson.data.products?.length || 0,
             invoicesCount: saJson.data.invoices?.length || 0,

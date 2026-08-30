@@ -1,6 +1,58 @@
 import * as XLSX from 'xlsx';
 import { Invoice, Product, Customer, ShopSettings } from '../types';
 
+/**
+ * Universal safe file downloader that works seamlessly on mobile (Android/iOS) and desktop browsers
+ */
+export const downloadBlobFile = (data: ArrayBuffer | Blob, filename: string, mimeType: string) => {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+
+  // 1. Try modern Web Share API for files on mobile if supported
+  if (
+    navigator.canShare &&
+    typeof File !== 'undefined' &&
+    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent)
+  ) {
+    try {
+      const fileObj = new File([blob], filename, { type: mimeType });
+      if (navigator.canShare({ files: [fileObj] })) {
+        navigator.share({
+          files: [fileObj],
+          title: filename,
+        }).catch((err) => {
+          // If share cancelled or failed, fallback to download link
+          console.log('Share dismissed, triggering standard download fallback', err);
+          fallbackDownloadLink(blob, filename);
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn('Web share file error, falling back:', e);
+    }
+  }
+
+  // 2. Standard Blob Object URL download fallback
+  fallbackDownloadLink(blob, filename);
+};
+
+const fallbackDownloadLink = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    try {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {}
+  }, 3000);
+};
+
 export const exportInvoicesToExcel = (
   invoices: Invoice[],
   customers: Customer[] = [],
@@ -142,7 +194,9 @@ export const exportInvoicesToExcel = (
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `${fileNamePrefix}_${todayStr}.xlsx`);
+  const filename = `${fileNamePrefix}_${todayStr}.xlsx`;
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlobFile(wbout, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 };
 
 export const exportSettingsToExcel = (settings: ShopSettings, fileNamePrefix = 'إعدادات_المحل') => {
@@ -165,7 +219,9 @@ export const exportSettingsToExcel = (settings: ShopSettings, fileNamePrefix = '
   wsSettings['!cols'] = [{ wch: 22 }, { wch: 45 }];
   XLSX.utils.book_append_sheet(wb, wsSettings, 'الإعدادات');
   const todayStr = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `${fileNamePrefix}_${todayStr}.xlsx`);
+  const filename = `${fileNamePrefix}_${todayStr}.xlsx`;
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlobFile(wbout, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 };
 
 export const exportCustomersToExcel = (customers: Customer[], invoices: Invoice[] = [], fileNamePrefix = 'قائمة_العملاء') => {
@@ -206,7 +262,9 @@ export const exportCustomersToExcel = (customers: Customer[], invoices: Invoice[
   ];
   XLSX.utils.book_append_sheet(wb, ws, 'العملاء');
   const todayStr = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `${fileNamePrefix}_${todayStr}.xlsx`);
+  const filename = `${fileNamePrefix}_${todayStr}.xlsx`;
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlobFile(wbout, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 };
 
 export const exportProductsToExcel = (products: Product[], fileNamePrefix = 'قائمة_أسعار_المنتجات') => {
@@ -242,7 +300,9 @@ export const exportProductsToExcel = (products: Product[], fileNamePrefix = 'ق�
   ];
   XLSX.utils.book_append_sheet(wb, ws, 'المنتجات والأسعار');
   const todayStr = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `${fileNamePrefix}_${todayStr}.xlsx`);
+  const filename = `${fileNamePrefix}_${todayStr}.xlsx`;
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  downloadBlobFile(wbout, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 };
 
 /**

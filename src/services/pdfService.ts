@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas-pro';
 import { Invoice, Product, ShopSettings } from '../types';
 import { preloadAndInlineImages } from '../utils/imageUtils';
+import { downloadBlobFile } from './excelService';
 
 /**
  * Trigger native browser system print for 100% vector-sharp, crystal-clear Arabic printing
@@ -257,8 +258,11 @@ export const generatePdfFromElement = async (
         const targetWidth = pageEl.scrollWidth || pageEl.offsetWidth || 800;
         const targetHeight = pageEl.scrollHeight || pageEl.offsetHeight || 1120;
 
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+        const renderScale = isMobile ? 2.0 : 3.0;
+
         const canvas = await html2canvas(pageEl, {
-          scale: 3.0,
+          scale: renderScale,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
@@ -303,8 +307,11 @@ export const generatePdfFromElement = async (
       const targetWidth = element.scrollWidth || element.offsetWidth || 800;
       const targetHeight = element.scrollHeight || element.offsetHeight || 1000;
 
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+      const renderScale = isMobile ? 2.0 : 3.0;
+
       const canvas = await html2canvas(element, {
-        scale: 3.0,
+        scale: renderScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -368,7 +375,8 @@ export const generatePdfFromElement = async (
       }
     }
 
-    pdf.save(`${fileName}.pdf`);
+    const pdfBlob = pdf.output('blob');
+    downloadBlobFile(pdfBlob, `${fileName}.pdf`, 'application/pdf');
     return true;
   } catch (error) {
     console.error('Error generating PDF:', error);
