@@ -80,17 +80,23 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             backgroundColor: '#f0f9f4',
                             border: '1.5px solid #a7f3d0',
                             boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                            width: '80px',
+                            height: '80px',
+                            minWidth: '80px',
+                            minHeight: '80px',
+                            maxWidth: '80px',
+                            maxHeight: '80px',
                           }}
                         >
                           <img
                             src={formatImageUrl(settings.logoUrl)}
                             alt="شعار المحل"
-                            className="w-full h-full object-contain rounded-xl"
+                            className="rounded-xl"
                             style={{
                               width: '100%',
                               height: '100%',
-                              maxWidth: '100%',
-                              maxHeight: '100%',
+                              maxWidth: '70px',
+                              maxHeight: '70px',
                               objectFit: 'contain',
                               display: 'block',
                               imageRendering: '-webkit-optimize-contrast',

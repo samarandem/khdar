@@ -289,16 +289,26 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                   <div className="flex flex-row items-center justify-between border-b border-gray-200 pb-4">
                     {/* Left: Logo and Shop Name */}
                     <div className="flex flex-col items-center text-center space-y-1 w-1/3">
-                      <div className="relative w-20 h-20 flex items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 border border-emerald-200 p-1.5 shadow-2xs">
+                      <div
+                        className="relative w-20 h-20 flex items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 border border-emerald-200 p-1.5 shadow-2xs"
+                        style={{
+                          width: '80px',
+                          height: '80px',
+                          minWidth: '80px',
+                          minHeight: '80px',
+                          maxWidth: '80px',
+                          maxHeight: '80px',
+                        }}
+                      >
                         <img
                           src={formatImageUrl(settings.logoUrl)}
                           alt={settings.shopName}
-                          className="w-full h-full object-contain rounded-xl"
+                          className="rounded-xl"
                           style={{
                             width: '100%',
                             height: '100%',
-                            maxWidth: '100%',
-                            maxHeight: '100%',
+                            maxWidth: '70px',
+                            maxHeight: '70px',
                             objectFit: 'contain',
                             display: 'block',
                             imageRendering: '-webkit-optimize-contrast',
