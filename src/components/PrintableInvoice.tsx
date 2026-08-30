@@ -12,7 +12,6 @@ import {
   Wallet,
   User,
   Calendar,
-  Clock,
   Leaf,
 } from 'lucide-react';
 
@@ -32,10 +31,11 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
   return (
     <div
       id={id}
-      className="bg-white text-[#1A1A1A] p-1 max-w-[800px] mx-auto rounded-3xl select-none space-y-6 overflow-x-auto w-full"
+      className="bg-white text-[#1A1A1A] p-1 max-w-[800px] mx-auto select-none space-y-6 overflow-x-auto w-full"
       dir="rtl"
       style={{
         width: '100%',
+        maxWidth: '800px',
         boxSizing: 'border-box',
         backgroundColor: '#ffffff',
         fontFamily: "'Cairo', 'Tajawal', sans-serif",
@@ -56,49 +56,78 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
           return (
             <div
               key={pageIdx}
-              className="pdf-page bg-white p-6 sm:p-8 space-y-5.5 flex flex-col justify-between mx-auto"
+              className="pdf-page bg-white p-6 space-y-4 flex flex-col justify-between mx-auto"
               style={{
                 width: '780px',
                 minHeight: '1100px',
                 boxSizing: 'border-box',
                 pageBreakAfter: 'always',
                 backgroundColor: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '24px',
               }}
             >
               {/* Top part wrapper */}
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
                 {/* 1. HEADER SECTION */}
                 {pageIdx === 0 ? (
                   // Full Header for Page 1
                   <>
-                    <div className="grid grid-cols-12 gap-3 items-center border-b pb-3.5" style={{ borderColor: '#d1d5db' }}>
-                      {/* Left: Shop Branding */}
-                      <div className="col-span-5 flex items-center gap-3">
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        borderBottom: '1.5px solid #d1d5db',
+                        paddingBottom: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* Left / Right 1: Shop Branding */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: '12px',
+                          width: '42%',
+                        }}
+                      >
                         <div
-                          className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl flex items-center justify-center shrink-0 p-1.5 overflow-hidden"
                           style={{
                             backgroundColor: '#f0f9f4',
                             border: '1.5px solid #a7f3d0',
+                            borderRadius: '16px',
                             boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                            width: '80px',
-                            height: '80px',
-                            minWidth: '80px',
-                            minHeight: '80px',
-                            maxWidth: '80px',
-                            maxHeight: '80px',
+                            width: '76px',
+                            height: '76px',
+                            minWidth: '76px',
+                            minHeight: '76px',
+                            maxWidth: '76px',
+                            maxHeight: '76px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '4px',
+                            boxSizing: 'border-box',
+                            overflow: 'hidden',
                           }}
                         >
                           <img
                             src={formatImageUrl(settings.logoUrl)}
                             alt="شعار المحل"
-                            className="rounded-xl"
                             style={{
-                              width: '100%',
-                              height: '100%',
-                              maxWidth: '70px',
-                              maxHeight: '70px',
+                              width: '68px',
+                              height: '68px',
+                              maxWidth: '68px',
+                              maxHeight: '68px',
                               objectFit: 'contain',
                               display: 'block',
+                              borderRadius: '10px',
                               imageRendering: '-webkit-optimize-contrast',
                               WebkitPrintColorAdjust: 'exact',
                               printColorAdjust: 'exact',
@@ -122,67 +151,114 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             }}
                           />
                         </div>
-                        <div className="min-w-0">
-                          <h1 className="text-xl sm:text-2xl font-black leading-tight mb-1" style={{ color: '#087A35' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#087A35', margin: 0, lineHeight: 1.2 }}>
                             {settings.shopName || 'خضار وفواكه'}
                           </h1>
-                          <p className="text-xs font-bold leading-tight" style={{ color: '#4b5563' }}>
+                          <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#4b5563', margin: 0, lineHeight: 1.2 }}>
                             {settings.shopSubtitle || 'فواكه طازجة وخضار يومية'}
                           </p>
-                          <div className="flex items-center gap-1.5 text-[11px] font-black mt-1" style={{ color: '#087A35' }}>
-                            <Leaf className="w-3.5 h-3.5 text-[#087A35]" />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '900', color: '#087A35', marginTop: '2px' }}>
+                            <Leaf style={{ width: '13px', height: '13px', color: '#087A35' }} />
                             <span>جودة عالية وطازجة</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Center: Main Title */}
-                      <div className="col-span-3 text-center space-y-1">
-                        <h2 className="text-2xl sm:text-3xl font-black" style={{ color: '#087A35', letterSpacing: '0px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          width: '24%',
+                        }}
+                      >
+                        <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#087A35', margin: 0, lineHeight: 1.2 }}>
                           فاتورة بيع
                         </h2>
-                        <div className="flex items-center justify-center gap-1.5 pt-0.5 opacity-80">
-                          <span className="h-[2px] w-7" style={{ backgroundColor: '#087A35' }} />
-                          <Leaf className="w-4 h-4 text-[#087A35]" />
-                          <span className="h-[2px] w-7" style={{ backgroundColor: '#087A35' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '4px', opacity: 0.8 }}>
+                          <span style={{ display: 'block', height: '2px', width: '28px', backgroundColor: '#087A35' }} />
+                          <Leaf style={{ width: '14px', height: '14px', color: '#087A35' }} />
+                          <span style={{ display: 'block', height: '2px', width: '28px', backgroundColor: '#087A35' }} />
                         </div>
                       </div>
 
-                      {/* Right: Invoice Badge & Date/Time */}
-                      <div className="col-span-4 flex flex-col items-end space-y-1.5">
+                      {/* Right: Invoice Badge & Date/Status */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          gap: '6px',
+                          width: '34%',
+                        }}
+                      >
                         <div
-                          className="w-full max-w-[160px] rounded-xl p-1 text-center text-white"
-                          style={{ backgroundColor: '#087A35', border: '1px solid #087A35' }}
+                          style={{
+                            width: '150px',
+                            backgroundColor: '#087A35',
+                            border: '1px solid #087A35',
+                            borderRadius: '12px',
+                            padding: '4px 6px',
+                            textAlign: 'center',
+                            color: '#ffffff',
+                            boxSizing: 'border-box',
+                          }}
                         >
-                          <div className="text-[10px] font-bold pb-0.5">رقم الفاتورة</div>
+                          <div style={{ fontSize: '10px', fontWeight: 'bold', paddingBottom: '2px' }}>رقم الفاتورة</div>
                           <div
-                            className="rounded-lg py-0.5 px-2 font-black text-sm sm:text-base dir-ltr"
-                            style={{ backgroundColor: '#ffffff', color: '#087A35' }}
+                            style={{
+                              backgroundColor: '#ffffff',
+                              color: '#087A35',
+                              borderRadius: '8px',
+                              padding: '2px 8px',
+                              fontWeight: '900',
+                              fontSize: '14px',
+                              direction: 'ltr',
+                              textAlign: 'center',
+                            }}
                           >
                             {invoice.id}
                           </div>
                         </div>
 
-                        <div className="text-[10px] font-bold space-y-1 text-left w-full max-w-[160px] pr-1" style={{ color: '#374151' }}>
-                          <div className="flex items-center justify-between">
-                            <span className="flex items-center gap-1" style={{ color: '#6b7280' }}>
-                              <Calendar className="w-3 h-3 text-[#087A35]" />
+                        <div
+                          style={{
+                            width: '150px',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            color: '#374151',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280' }}>
+                              <Calendar style={{ width: '12px', height: '12px', color: '#087A35' }} />
                               <span>التاريخ</span>
                             </span>
-                            <span className="font-extrabold" style={{ color: '#111827' }}>{invoice.date}</span>
+                            <span style={{ fontWeight: '800', color: '#111827' }}>{invoice.date}</span>
                           </div>
 
-                          <div className="flex items-center justify-between pt-0.5">
-                            <span className="flex items-center gap-1" style={{ color: '#6b7280' }}>
-                              <Wallet className="w-3 h-3 text-[#087A35]" />
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280' }}>
+                              <Wallet style={{ width: '12px', height: '12px', color: '#087A35' }} />
                               <span>حالة الدفع</span>
                             </span>
                             <span
-                              className="px-2 py-0.5 rounded-md font-black text-[11px]"
                               style={{
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                fontWeight: '900',
+                                fontSize: '10px',
                                 backgroundColor: invoice.status === 'pending' ? '#fef3c7' : '#dcfce7',
                                 color: invoice.status === 'pending' ? '#92400e' : '#166534',
-                                border: invoice.status === 'pending' ? '1.5px solid #f59e0b' : '1.5px solid #86efac',
+                                border: invoice.status === 'pending' ? '1px solid #f59e0b' : '1px solid #86efac',
                               }}
                             >
                               {invoice.status === 'pending' ? 'ذمم (آجل)' : 'نقداً (مدفوعة)'}
@@ -194,64 +270,100 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
 
                     {/* 2. CUSTOMER INFO BAR */}
                     <div
-                      className="rounded-2xl p-3.5 flex items-center justify-between"
-                      style={{ backgroundColor: '#f0f9f4', border: '1px solid #bbf7d0' }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        backgroundColor: '#f0f9f4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '16px',
+                        padding: '12px 16px',
+                        boxSizing: 'border-box',
+                      }}
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-bold" style={{ color: '#4b5563' }}>اسم المشتري :</span>
-                          <span className="font-black" style={{ color: '#111827' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                          <span style={{ fontWeight: 'bold', color: '#4b5563' }}>اسم المشتري :</span>
+                          <span style={{ fontWeight: '900', color: '#111827' }}>
                             {invoice.customerName || 'عميل عام'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-bold flex items-center gap-1" style={{ color: '#4b5563' }}>
-                            <Phone className="w-3.5 h-3.5 text-[#087A35]" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                          <span style={{ fontWeight: 'bold', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Phone style={{ width: '13px', height: '13px', color: '#087A35' }} />
                             <span>رقم الهاتف :</span>
                           </span>
-                          <span className="font-black" style={{ color: '#1f2937' }} dir="ltr">
+                          <span style={{ fontWeight: '900', color: '#1f2937', direction: 'ltr' }}>
                             {invoice.customerPhone || '0791234567'}
                           </span>
                         </div>
                       </div>
 
                       <div
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                        style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: '8px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '12px',
+                          padding: '6px 12px',
+                        }}
                       >
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
-                          style={{ backgroundColor: '#f0f9f4', color: '#087A35' }}
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: '#f0f9f4',
+                            color: '#087A35',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                         >
-                          <User className="w-4.5 h-4.5 text-[#087A35]" />
+                          <User style={{ width: '16px', height: '16px', color: '#087A35' }} />
                         </div>
-                        <span className="text-xs font-black" style={{ color: '#087A35' }}>بيانات المشتري</span>
+                        <span style={{ fontSize: '12px', fontWeight: '900', color: '#087A35' }}>بيانات المشتري</span>
                       </div>
                     </div>
                   </>
                 ) : (
                   // Simplified Header for Page 2+
-                  <div className="flex items-center justify-between border-b pb-3 mb-2" style={{ borderColor: '#e5e7eb' }}>
-                    <div className="flex items-center gap-2">
-                      <Leaf className="w-4 h-4 text-[#087A35]" />
-                      <span className="text-xs font-black text-[#087A35]">{settings.shopName}</span>
-                      <span className="text-xs text-gray-400">|</span>
-                      <span className="text-xs font-extrabold text-gray-600">تكملة فاتورة رقم {invoice.id}</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: '1px solid #e5e7eb',
+                      paddingBottom: '12px',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Leaf style={{ width: '16px', height: '16px', color: '#087A35' }} />
+                      <span style={{ fontSize: '12px', fontWeight: '900', color: '#087A35' }}>{settings.shopName}</span>
+                      <span style={{ fontSize: '12px', color: '#9ca3af' }}>|</span>
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#4b5563' }}>تكملة فاتورة رقم {invoice.id}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-gray-400">التاريخ: {invoice.date}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af' }}>التاريخ: {invoice.date}</span>
                   </div>
                 )}
 
                 {/* 3. PRODUCTS TABLE */}
-                <div className="rounded-xl overflow-hidden shadow-2xs" style={{ border: '1px solid #e5e7eb' }}>
-                  <table className="w-full border-collapse text-right text-xs">
+                <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e7eb', width: '100%', boxSizing: 'border-box' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '12px' }}>
                     <thead>
-                      <tr className="font-bold text-xs" style={{ backgroundColor: '#087A35', color: '#ffffff' }}>
-                        <th className="py-2 px-2.5 w-10 text-center" style={{ borderLeft: '1px solid rgba(255,255,255,0.15)' }}>م</th>
-                        <th className="py-2 px-3" style={{ borderLeft: '1px solid rgba(255,255,255,0.15)' }}>المنتج</th>
-                        <th className="py-2 px-2.5 text-center" style={{ borderLeft: '1px solid rgba(255,255,255,0.15)' }}>الكمية</th>
-                        <th className="py-2 px-2.5 text-center" style={{ borderLeft: '1px solid rgba(255,255,255,0.15)' }}>سعر الوحدة</th>
-                        <th className="py-2 px-3 text-center">الإجمالي</th>
+                      <tr style={{ backgroundColor: '#087A35', color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}>
+                        <th style={{ padding: '8px 10px', width: '36px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>م</th>
+                        <th style={{ padding: '8px 12px', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>المنتج</th>
+                        <th style={{ padding: '8px 10px', width: '100px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>الكمية</th>
+                        <th style={{ padding: '8px 10px', width: '110px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>سعر الوحدة</th>
+                        <th style={{ padding: '8px 12px', width: '100px', textAlign: 'center' }}>الإجمالي</th>
                       </tr>
                     </thead>
                     <tbody style={{ backgroundColor: '#ffffff' }}>
@@ -267,43 +379,54 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                         return (
                           <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
                             {/* Item Index */}
-                            <td className="py-1.5 px-2.5 text-center font-bold text-xs" style={{ color: '#4b5563', borderLeft: '1px solid #e5e7eb' }}>
+                            <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#4b5563', borderLeft: '1px solid #e5e7eb' }}>
                               {globalIdx + 1}
                             </td>
 
-                            {/* Product Name + Image */}
-                            <td className="py-1.5 px-3 font-bold text-xs" style={{ color: '#111827', borderLeft: '1px solid #e5e7eb' }}>
-                              <div className="flex items-center justify-between gap-1.5">
-                                <span className="font-black text-xs" style={{ color: '#111827' }}>{item.productName}</span>
+                            {/* Product Name + Thumbnail Image */}
+                            <td style={{ padding: '6px 12px', fontWeight: 'bold', fontSize: '12px', color: '#111827', borderLeft: '1px solid #e5e7eb' }}>
+                              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                <span style={{ fontWeight: '900', fontSize: '12px', color: '#111827' }}>{item.productName}</span>
                                 {item.image ? (
                                   <img
                                     src={item.image}
                                     alt={item.productName}
-                                    className="w-7 h-7 rounded-md object-cover shrink-0 ml-1.5"
-                                    style={{ border: '1px solid #e5e7eb' }}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      minWidth: '28px',
+                                      minHeight: '28px',
+                                      maxWidth: '28px',
+                                      maxHeight: '28px',
+                                      objectFit: 'cover',
+                                      borderRadius: '6px',
+                                      border: '1px solid #e5e7eb',
+                                      display: 'block',
+                                      marginInlineStart: '6px',
+                                    }}
                                     crossOrigin="anonymous"
                                     onError={(e) => {
                                       (e.target as HTMLElement).style.display = 'none';
                                     }}
                                   />
                                 ) : (
-                                  <span className="text-sm ml-1.5">🥬</span>
+                                  <span style={{ fontSize: '14px', marginInlineStart: '6px' }}>🥬</span>
                                 )}
                               </div>
                             </td>
 
                             {/* Quantity */}
-                            <td className="py-1.5 px-2.5 text-center font-bold text-xs" style={{ color: '#1f2937', borderLeft: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
+                            <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#1f2937', borderLeft: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
                               {qtyDisplay}
                             </td>
 
                             {/* Unit Price */}
-                            <td className="py-1.5 px-2.5 text-center font-bold text-xs" style={{ color: '#374151', borderLeft: '1px solid #e5e7eb' }}>
+                            <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#374151', borderLeft: '1px solid #e5e7eb' }}>
                               {priceDisplay}
                             </td>
 
                             {/* Total */}
-                            <td className="py-1.5 px-3 text-center font-extrabold text-xs" style={{ color: '#087A35' }}>
+                            <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: '#087A35' }}>
                               {totalDisplay}
                             </td>
                           </tr>
@@ -315,66 +438,78 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
               </div>
 
               {/* Bottom part wrapper */}
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
                 {isLastPage ? (
                   // Totals section only on last page
                   <>
                     {/* 4. TOTALS SECTION */}
                     <div
-                      className="w-full rounded-xl p-3.5 space-y-2"
-                      style={{ backgroundColor: '#f0f9f4', border: '2px solid #a7f3d0' }}
+                      style={{
+                        width: '100%',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        backgroundColor: '#f0f9f4',
+                        border: '2px solid #a7f3d0',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
                     >
-                      <div className="flex items-center justify-between text-xs font-bold" style={{ color: '#374151' }}>
-                        <span className="flex items-center gap-1.5">
-                          <Calculator className="w-4 h-4 text-[#087A35]" />
+                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', color: '#374151' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Calculator style={{ width: '15px', height: '15px', color: '#087A35' }} />
                           <span>المجموع الفرعي</span>
                         </span>
-                        <span className="text-sm font-black" style={{ color: '#111827' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#111827' }}>
                           {(Number(invoice.subtotal ?? invoice.total) || 0).toFixed(2)} {settings.currency}
                         </span>
                       </div>
 
                       {(Boolean(invoice.deliveryFee) && (Number(invoice.deliveryFee) || 0) > 0) && (
-                        <div className="flex items-center justify-between text-xs font-bold" style={{ color: '#374151' }}>
-                          <span className="flex items-center gap-1.5">
-                            <Truck className="w-4 h-4 text-[#087A35]" />
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', color: '#374151' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Truck style={{ width: '15px', height: '15px', color: '#087A35' }} />
                             <span>خدمة التوصيل</span>
                           </span>
-                          <span className="text-sm font-black" style={{ color: '#087A35' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '900', color: '#087A35' }}>
                             + {(Number(invoice.deliveryFee) || 0).toFixed(2)} {settings.currency}
                           </span>
                         </div>
                       )}
 
                       {(Boolean(invoice.discount) && (Number(invoice.discount) || 0) > 0) && (
-                        <div className="flex items-center justify-between text-xs font-bold" style={{ color: '#374151' }}>
-                          <span className="flex items-center gap-1.5">
-                            <Tag className="w-4 h-4 text-amber-600" />
+                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold', color: '#374151' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Tag style={{ width: '15px', height: '15px', color: '#b45309' }} />
                             <span>الخصم</span>
                           </span>
-                          <span className="text-sm font-black" style={{ color: '#b45309' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '900', color: '#b45309' }}>
                             - {(Number(invoice.discount) || 0).toFixed(2)} {settings.currency}
                           </span>
                         </div>
                       )}
 
-                      <div style={{ borderTop: '1px dashed #a7f3d0', marginTop: '4px', marginBottom: '4px' }} />
+                      <div style={{ borderTop: '1px dashed #a7f3d0', marginTop: '2px', marginBottom: '2px' }} />
 
-                      <div className="flex items-center justify-between text-sm font-black" style={{ color: '#087A35' }}>
-                        <span className="flex items-center gap-1.5 text-sm font-black">
-                          <Wallet className="w-4.5 h-4.5 text-[#087A35]" />
+                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontSize: '14px', fontWeight: '900', color: '#087A35' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Wallet style={{ width: '18px', height: '18px', color: '#087A35' }} />
                           <span>الإجمالي الكلي المطلوب</span>
                         </span>
-                        <span className="text-lg sm:text-xl font-black" style={{ color: '#087A35' }}>
+                        <span style={{ fontSize: '18px', fontWeight: '900', color: '#087A35' }}>
                           {(Number(invoice.total) || 0).toFixed(2)} {settings.currency}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs font-bold pt-1" style={{ color: '#374151', borderTop: '1px dashed #a7f3d0' }}>
+                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', fontWeight: 'bold', color: '#374151', borderTop: '1px dashed #a7f3d0', paddingTop: '4px' }}>
                         <span>طريقة / حالة السداد:</span>
                         <span
-                          className="px-2.5 py-0.5 rounded-md font-black text-xs"
                           style={{
+                            padding: '2px 10px',
+                            borderRadius: '6px',
+                            fontWeight: '900',
+                            fontSize: '11px',
                             backgroundColor: invoice.status === 'pending' ? '#fef3c7' : '#dcfce7',
                             color: invoice.status === 'pending' ? '#92400e' : '#166534',
                             border: invoice.status === 'pending' ? '1px solid #f59e0b' : '1px solid #86efac',
@@ -387,66 +522,155 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
 
                     {/* 5. TAFQEET ARABIC WRITTEN TOTAL */}
                     <div
-                      className="text-center rounded-xl py-2 px-3"
-                      style={{ backgroundColor: '#f0f9f4', border: '2px solid #a7f3d0' }}
+                      style={{
+                        textAlign: 'center',
+                        borderRadius: '12px',
+                        padding: '8px 12px',
+                        backgroundColor: '#f0f9f4',
+                        border: '2px solid #a7f3d0',
+                        boxSizing: 'border-box',
+                      }}
                     >
-                      <span className="text-xs sm:text-sm font-black" style={{ color: '#087A35' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '900', color: '#087A35' }}>
                         {tafqeetText}
                       </span>
                     </div>
 
                     {/* 6. FOOTER CONTACT CARDS */}
-                    <div className="pt-2 space-y-2.5" style={{ borderTop: '2px solid #e5e7eb' }}>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-bold text-center">
+                    <div style={{ paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1.5px solid #e5e7eb', width: '100%', boxSizing: 'border-box' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'stretch',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          width: '100%',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        {/* 1: Address */}
                         <div
-                          className="rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 min-h-[60px]"
-                          style={{ backgroundColor: '#f8fafc', border: '2px solid #cbd5e1' }}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#f8fafc',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '12px',
+                            padding: '8px 4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            textAlign: 'center',
+                            minHeight: '60px',
+                            boxSizing: 'border-box',
+                          }}
                         >
-                          <MapPin className="w-4 h-4 text-red-500 shrink-0" />
-                          <span className="font-bold text-[10px]" style={{ color: '#64748b' }}>العنوان</span>
-                          <span className="font-black leading-tight text-center break-words max-w-full" style={{ color: '#0f172a' }}>
-                            {settings.address || 'عمان - الأردن / سوق الخضار المركزي'}
+                          <MapPin style={{ width: '15px', height: '15px', color: '#ef4444', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 'bold', fontSize: '10px', color: '#64748b' }}>العنوان</span>
+                          <span style={{ fontWeight: '900', fontSize: '10px', color: '#0f172a', lineHeight: 1.2 }}>
+                            {settings.address || 'عمان - الأردن'}
                           </span>
                         </div>
 
+                        {/* 2: Delivery */}
                         <div
-                          className="rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 min-h-[60px]"
-                          style={{ backgroundColor: '#f8fafc', border: '2px solid #cbd5e1' }}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#f8fafc',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '12px',
+                            padding: '8px 4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            textAlign: 'center',
+                            minHeight: '60px',
+                            boxSizing: 'border-box',
+                          }}
                         >
-                          <Truck className="w-4 h-4 text-[#087A35] shrink-0" />
-                          <span className="font-bold text-[10px]" style={{ color: '#64748b' }}>خدمة توصيل</span>
-                          <span className="font-black text-center text-[10px] leading-tight" style={{ color: '#087A35' }}>سريعة خلال ٢٤ ساعة</span>
+                          <Truck style={{ width: '15px', height: '15px', color: '#087A35', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 'bold', fontSize: '10px', color: '#64748b' }}>خدمة توصيل</span>
+                          <span style={{ fontWeight: '900', fontSize: '10px', color: '#087A35', lineHeight: 1.2 }}>
+                            سريعة خلال ٢٤ ساعة
+                          </span>
                         </div>
 
+                        {/* 3: Whatsapp */}
                         <div
-                          className="rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 min-h-[60px]"
-                          style={{ backgroundColor: '#f8fafc', border: '2px solid #cbd5e1' }}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#f8fafc',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '12px',
+                            padding: '8px 4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            textAlign: 'center',
+                            minHeight: '60px',
+                            boxSizing: 'border-box',
+                          }}
                         >
-                          <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span className="font-bold text-[10px]" style={{ color: '#64748b' }}>واتساب</span>
-                          <span dir="ltr" className="font-black" style={{ color: '#0f172a' }}>{settings.whatsapp || '0791234567'}</span>
+                          <MessageCircle style={{ width: '15px', height: '15px', color: '#059669', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 'bold', fontSize: '10px', color: '#64748b' }}>واتساب</span>
+                          <span style={{ fontWeight: '900', fontSize: '10px', color: '#0f172a', direction: 'ltr' }}>
+                            {settings.whatsapp || '0791234567'}
+                          </span>
                         </div>
 
+                        {/* 4: Phone */}
                         <div
-                          className="rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 min-h-[60px]"
-                          style={{ backgroundColor: '#f8fafc', border: '2px solid #cbd5e1' }}
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#f8fafc',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '12px',
+                            padding: '8px 4px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '2px',
+                            textAlign: 'center',
+                            minHeight: '60px',
+                            boxSizing: 'border-box',
+                          }}
                         >
-                          <Phone className="w-4 h-4 text-[#087A35] shrink-0" />
-                          <span className="font-bold text-[10px]" style={{ color: '#64748b' }}>للطلب</span>
-                          <span dir="ltr" className="font-black" style={{ color: '#0f172a' }}>{settings.phone || '0791234567'}</span>
+                          <Phone style={{ width: '15px', height: '15px', color: '#087A35', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 'bold', fontSize: '10px', color: '#64748b' }}>للطلب</span>
+                          <span style={{ fontWeight: '900', fontSize: '10px', color: '#0f172a', direction: 'ltr' }}>
+                            {settings.phone || '0791234567'}
+                          </span>
                         </div>
                       </div>
 
                       {/* Bottom green slogan banner */}
                       <div
-                        className="rounded-xl py-1.5 px-4 text-center flex items-center justify-between text-xs font-bold"
-                        style={{ backgroundColor: '#087A35', color: '#ffffff' }}
+                        style={{
+                          borderRadius: '12px',
+                          padding: '6px 16px',
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          backgroundColor: '#087A35',
+                          color: '#ffffff',
+                          boxSizing: 'border-box',
+                        }}
                       >
-                        <div className="flex items-center gap-2">
-                          <Leaf className="w-3.5 h-3.5 shrink-0 text-white" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Leaf style={{ width: '14px', height: '14px', color: '#ffffff', flexShrink: 0 }} />
                           <span>{settings.slogan || 'جودة عالية ... طازجة يومية'}</span>
                         </div>
-                        <span className="text-[10px] font-bold opacity-85">
+                        <span style={{ fontSize: '10px', fontWeight: 'bold', opacity: 0.85 }}>
                           صفحة {pageIdx + 1} من {chunksToRender.length}
                         </span>
                       </div>
@@ -454,20 +678,42 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                   </>
                 ) : (
                   // "Continued" note on intermediate pages
-                  <div className="space-y-4 pt-4 border-t border-gray-100">
-                    <div className="text-center py-4 text-xs font-bold text-gray-400 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '12px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#9ca3af',
+                        border: '1px dashed #e5e7eb',
+                        borderRadius: '12px',
+                        backgroundColor: '#f9fafb',
+                      }}
+                    >
                       يتبع في الصفحة التالية... (صفحة {pageIdx + 1} من {chunksToRender.length})
                     </div>
 
                     <div
-                      className="rounded-xl py-1.5 px-4 text-center flex items-center justify-between text-xs font-bold"
-                      style={{ backgroundColor: '#087A35', color: '#ffffff' }}
+                      style={{
+                        borderRadius: '12px',
+                        padding: '6px 16px',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        backgroundColor: '#087A35',
+                        color: '#ffffff',
+                        boxSizing: 'border-box',
+                      }}
                     >
-                      <div className="flex items-center gap-2">
-                        <Leaf className="w-3.5 h-3.5 shrink-0 text-white" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Leaf style={{ width: '14px', height: '14px', color: '#ffffff', flexShrink: 0 }} />
                         <span>{settings.slogan || 'جودة عالية ... طازجة يومية'}</span>
                       </div>
-                      <span className="text-[10px] font-bold opacity-85">
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', opacity: 0.85 }}>
                         صفحة {pageIdx + 1} من {chunksToRender.length}
                       </span>
                     </div>
@@ -481,3 +727,4 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
     </div>
   );
 };
+

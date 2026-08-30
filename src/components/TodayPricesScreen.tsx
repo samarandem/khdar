@@ -390,12 +390,30 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
 
                               {/* Image */}
                               <td className="py-1.5 px-2 text-center border-l border-gray-100" style={{ borderLeftColor: '#f3f4f6' }}>
-                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white mx-auto flex items-center justify-center border border-gray-100/80">
+                                <div
+                                  className="rounded-lg overflow-hidden bg-white mx-auto flex items-center justify-center border border-gray-100/80"
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    minWidth: '36px',
+                                    minHeight: '36px',
+                                    maxWidth: '36px',
+                                    maxHeight: '36px',
+                                    boxSizing: 'border-box',
+                                  }}
+                                >
                                   {prod.image && (prod.image.startsWith('http') || prod.image.startsWith('data:')) ? (
                                     <img
                                       src={prod.image}
                                       alt={prod.name}
-                                      className="w-full h-full object-contain"
+                                      style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        maxWidth: '32px',
+                                        maxHeight: '32px',
+                                        objectFit: 'contain',
+                                        display: 'block',
+                                      }}
                                       loading="lazy"
                                       onError={(e) => {
                                         const imgEl = e.target as HTMLElement;
@@ -433,68 +451,192 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                 </div>
 
                 {/* Footer Section resembling the image */}
-                <div className="space-y-3">
-                  <div className="border border-gray-200/60 rounded-2xl p-4 bg-[#F8FAF9] shadow-4xs">
-                    <div className="grid grid-cols-4 gap-4 items-center justify-between text-right">
-                      {/* WhatsApp */}
-                      <div className="flex items-center gap-2.5 justify-end">
-                        <div className="space-y-0.5">
-                          <div className="text-[10px] font-bold text-gray-500 leading-none">للطلب عبر</div>
-                          <div className="text-xs font-black text-[#0B6636]">واتساب</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                  <div
+                    style={{
+                      border: '1px solid rgba(229, 231, 235, 0.8)',
+                      borderRadius: '16px',
+                      padding: '12px 14px',
+                      backgroundColor: '#F8FAF9',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'stretch',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* 1: WhatsApp */}
+                      <div
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#6b7280' }}>للطلب عبر</span>
+                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#0B6636' }}>واتساب</span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#0B6636]">
-                          <MessageCircle className="w-4.5 h-4.5 fill-[#0B6636]" />
+                        <div
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: '#E6F4EA',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0B6636',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <MessageCircle style={{ width: '16px', height: '16px', color: '#0B6636' }} />
                         </div>
                       </div>
 
-                      {/* Delivery Service */}
-                      <div className="flex items-center gap-2.5 justify-end border-r border-gray-200/60 pr-4">
-                        <div className="space-y-0.5">
-                          <div className="text-[10px] font-bold text-gray-500 leading-none">خدمة توصيل</div>
-                          <div className="text-xs font-black text-[#0B6636]">سريعة</div>
+                      {/* 2: Delivery */}
+                      <div
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gap: '8px',
+                          borderRight: '1px solid #e5e7eb',
+                          paddingRight: '10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#6b7280' }}>خدمة توصيل</span>
+                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#0B6636' }}>سريعة</span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#0B6636]">
-                          <Truck className="w-4.5 h-4.5" />
+                        <div
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: '#E6F4EA',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0B6636',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Truck style={{ width: '16px', height: '16px', color: '#0B6636' }} />
                         </div>
                       </div>
 
-                      {/* Location */}
-                      <div className="flex items-center gap-2.5 justify-end border-r border-gray-200/60 pr-4">
-                        <div className="space-y-0.5 max-w-[150px]">
-                          <div className="text-[11px] font-black text-gray-700 leading-tight">
+                      {/* 3: Location */}
+                      <div
+                        style={{
+                          flex: 1.2,
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gap: '8px',
+                          borderRight: '1px solid #e5e7eb',
+                          paddingRight: '10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right', maxWidth: '140px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '900', color: '#374151', lineHeight: 1.2 }}>
                             {settings.address || 'عمان - ماركا الشمالية'}
-                          </div>
-                          <div className="text-[9px] text-gray-400 font-bold leading-none">
+                          </span>
+                          <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#9ca3af' }}>
                             سوق الخضار المركزي
-                          </div>
+                          </span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#0B6636]">
-                          <MapPin className="w-4.5 h-4.5" />
+                        <div
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: '#E6F4EA',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0B6636',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <MapPin style={{ width: '16px', height: '16px', color: '#0B6636' }} />
                         </div>
                       </div>
 
-                      {/* Phones */}
-                      <div className="flex items-center gap-2.5 justify-end border-r border-gray-200/60 pr-4">
-                        <div className="space-y-0.5 text-left font-mono">
-                          <div className="text-xs font-black text-gray-700 leading-none">{settings.phone}</div>
+                      {/* 4: Phone */}
+                      <div
+                        style={{
+                          flex: 1.1,
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gap: '8px',
+                          borderRight: '1px solid #e5e7eb',
+                          paddingRight: '10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', direction: 'ltr' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#374151' }}>{settings.phone || '0791234567'}</span>
                           {settings.whatsapp && settings.whatsapp !== settings.phone && (
-                            <div className="text-[10px] font-bold text-gray-400 leading-none mt-1">{settings.whatsapp}</div>
+                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#9ca3af', marginTop: '2px' }}>{settings.whatsapp}</span>
                           )}
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#0B6636]">
-                          <Phone className="w-4.5 h-4.5 fill-[#0B6636]" />
+                        <div
+                          style={{
+                            width: '30px',
+                            height: '30px',
+                            borderRadius: '50%',
+                            backgroundColor: '#E6F4EA',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0B6636',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Phone style={{ width: '16px', height: '16px', color: '#0B6636' }} />
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Green Bottom Solid Strip */}
-                  <div className="bg-[#0B6636] text-white py-2 px-4 rounded-xl text-center text-xs font-black flex items-center justify-between gap-2" style={{ backgroundColor: '#0B6636' }}>
-                    <div className="flex items-center gap-2">
-                      <Leaf className="w-3.5 h-3.5 fill-white" />
+                  <div
+                    style={{
+                      backgroundColor: '#0B6636',
+                      color: '#ffffff',
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      fontSize: '11px',
+                      fontWeight: '900',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Leaf style={{ width: '14px', height: '14px', color: '#ffffff', flexShrink: 0 }} />
                       <span>جودة عالية ... طزاجة يومية</span>
                     </div>
-                    <span className="text-[10px] font-bold opacity-85">
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', opacity: 0.85 }}>
                       صفحة {pageIdx + 1} من {chunksToRender.length}
                     </span>
                   </div>
