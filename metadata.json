@@ -1,0 +1,6 @@
+{
+  "name": "خضار وفواكه",
+  "description": "نظام فواتير ومبيعات محل خضار وفواكه - إنشاء فواتير سريعة بدعم الكسور العشرية وتصدير إكسل وPDF وأسعار اليوم",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
