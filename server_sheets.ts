@@ -5,15 +5,30 @@ import { google } from "googleapis";
 const SERVICE_ACCOUNT_PATH = path.join(process.cwd(), "service_account.json");
 
 export function isServiceAccountConfigured(): boolean {
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    return true;
+  }
   return fs.existsSync(SERVICE_ACCOUNT_PATH);
 }
 
 function getSheetsClient() {
-  if (!isServiceAccountConfigured()) {
-    throw new Error("Service account file not found");
+  const envJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  let credentials: any = undefined;
+
+  if (envJson) {
+    try {
+      credentials = typeof envJson === "string" ? JSON.parse(envJson) : envJson;
+    } catch (e) {
+      console.error("Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON env variable:", e);
+    }
   }
+
+  if (!credentials && !fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+    throw new Error("Service account credentials not found in environment or file");
+  }
+
   const auth = new google.auth.GoogleAuth({
-    keyFile: SERVICE_ACCOUNT_PATH,
+    ...(credentials ? { credentials } : { keyFile: SERVICE_ACCOUNT_PATH }),
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
   return google.sheets({ version: "v4", auth });
