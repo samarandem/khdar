@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ShopSettings, Invoice, Product, Customer } from '../types';
 import { GoogleSheetsPanel } from './GoogleSheetsPanel';
 import {
@@ -17,8 +17,21 @@ import {
   Upload,
   Image as ImageIcon,
   Trash2,
+  Download,
+  Loader2,
+  AlertTriangle,
+  Users,
+  Receipt,
+  Layers,
 } from 'lucide-react';
-import { exportInvoicesToExcel, exportProductsToExcel } from '../services/excelService';
+import {
+  exportInvoicesToExcel,
+  exportProductsToExcel,
+  exportCustomersToExcel,
+  importCustomersFromExcel,
+  importInvoicesFromExcel,
+  importProductsFromExcel,
+} from '../services/excelService';
 import { migrateAllProducts } from '../services/storage';
 import { formatImageUrl } from '../utils/imageUtils';
 
@@ -29,6 +42,9 @@ interface SettingsScreenProps {
   customers: Customer[];
   onSaveSettings: (settings: ShopSettings) => void;
   onResetData: () => void;
+  onBatchUpdateProducts?: (products: Product[]) => void;
+  onBatchUpdateCustomers?: (customers: Customer[]) => void;
+  onBatchUpdateInvoices?: (invoices: Invoice[]) => void;
   onDataLoadedFromSheets?: (
     products?: Product[],
     invoices?: Invoice[],
@@ -45,6 +61,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   customers,
   onSaveSettings,
   onResetData,
+  onBatchUpdateProducts,
+  onBatchUpdateCustomers,
+  onBatchUpdateInvoices,
   onDataLoadedFromSheets = () => {},
   onLogout,
 }) => {
@@ -55,6 +74,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     ...settings,
   });
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // File import inputs & notifications
+  const importCustFileRef = useRef<HTMLInputElement>(null);
+  const importInvFileRef = useRef<HTMLInputElement>(null);
+  const importProdFileRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   React.useEffect(() => {
     setFormData({
@@ -78,6 +107,85 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleExportProducts = () => {
     exportProductsToExcel(products, `قائمة_منتجات_${formData.shopName.replace(/\s+/g, '_')}`);
+  };
+
+  const handleExportCustomers = () => {
+    exportCustomersToExcel(customers, invoices, formData.currency);
+  };
+
+  const handleImportCustomersFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    setImportStatus(null);
+    try {
+      const result = await importCustomersFromExcel(file, customers);
+      if (onBatchUpdateCustomers) {
+        onBatchUpdateCustomers(result.updatedCustomers);
+      }
+      setImportStatus({
+        type: 'success',
+        message: `تم استيراد العملاء بنجاح: تم تحديث ${result.matchedCount} عميل وإضافة ${result.addedCount} عميل جديد.`,
+      });
+    } catch (err: any) {
+      setImportStatus({
+        type: 'error',
+        message: err.message || 'فشل استيراد العملاء من ملف Excel',
+      });
+    } finally {
+      setIsImporting(false);
+      if (importCustFileRef.current) importCustFileRef.current.value = '';
+    }
+  };
+
+  const handleImportInvoicesFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    setImportStatus(null);
+    try {
+      const result = await importInvoicesFromExcel(file, invoices, products);
+      if (onBatchUpdateInvoices) {
+        onBatchUpdateInvoices(result.updatedInvoices);
+      }
+      setImportStatus({
+        type: 'success',
+        message: `تم استيراد وتحديث الفواتير بنجاح: تم تحديث ${result.matchedCount} فاتورة وإضافة ${result.addedCount} فاتورة جديدة.`,
+      });
+    } catch (err: any) {
+      setImportStatus({
+        type: 'error',
+        message: err.message || 'فشل استيراد الفواتير من ملف Excel',
+      });
+    } finally {
+      setIsImporting(false);
+      if (importInvFileRef.current) importInvFileRef.current.value = '';
+    }
+  };
+
+  const handleImportProductsFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    setImportStatus(null);
+    try {
+      const result = await importProductsFromExcel(file, products);
+      if (onBatchUpdateProducts) {
+        onBatchUpdateProducts(result.updatedProducts);
+      }
+      setImportStatus({
+        type: 'success',
+        message: `تم استيراد الأصناف والأسعار بنجاح: تم تحديث ${result.matchedCount} صنف وإضافة ${result.addedCount} صنف جديد.`,
+      });
+    } catch (err: any) {
+      setImportStatus({
+        type: 'error',
+        message: err.message || 'فشل استيراد المنتجات من ملف Excel',
+      });
+    } finally {
+      setIsImporting(false);
+      if (importProdFileRef.current) importProdFileRef.current.value = '';
+    }
   };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -451,37 +559,158 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         onDataLoadedFromSheets={onDataLoadedFromSheets}
       />
 
-      {/* 3. Excel Export & Backup Section */}
-      <div className="bg-white rounded-2xl p-4 shadow-2xs border border-gray-200 space-y-2.5">
-        <h3 className="font-bold text-xs text-[#1A1A1A] flex items-center gap-1.5 border-b border-gray-100 pb-1.5">
-          <FileSpreadsheet className="w-4 h-4 text-[#087A35]" />
-          <span>تصدير البيانات إلى Excel</span>
-        </h3>
+      {/* 3. Excel Import & Export Center */}
+      <div className="bg-white rounded-2xl p-4 shadow-2xs border border-gray-200 space-y-4">
+        {/* Hidden inputs for imports */}
+        <input
+          ref={importCustFileRef}
+          type="file"
+          accept=".xlsx, .xls, .csv"
+          onChange={handleImportCustomersFile}
+          className="hidden"
+        />
+        <input
+          ref={importInvFileRef}
+          type="file"
+          accept=".xlsx, .xls, .csv"
+          onChange={handleImportInvoicesFile}
+          className="hidden"
+        />
+        <input
+          ref={importProdFileRef}
+          type="file"
+          accept=".xlsx, .xls, .csv"
+          onChange={handleImportProductsFile}
+          className="hidden"
+        />
+
+        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h3 className="font-bold text-xs text-[#1A1A1A] flex items-center gap-1.5">
+            <FileSpreadsheet className="w-4 h-4 text-[#087A35]" />
+            <span>مركز استيراد وتصدير ملفات Excel</span>
+          </h3>
+          {isImporting && (
+            <div className="flex items-center gap-1 text-[11px] font-bold text-blue-700">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>جاري المعالجة...</span>
+            </div>
+          )}
+        </div>
+
+        {importStatus && (
+          <div
+            className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold ${
+              importStatus.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                : 'bg-red-50 border-red-200 text-red-900'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {importStatus.type === 'success' ? (
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+              )}
+              <span>{importStatus.message}</span>
+            </div>
+            <button
+              onClick={() => setImportStatus(null)}
+              className="p-1 hover:bg-black/5 rounded-lg text-gray-500 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <p className="text-[11px] text-gray-500">
-          يمكنك تصدير كامل سجلات الفواتير وتفاصيل كل صنف بدقة وزنية عالية، أو تصدير قائمة المنتجات والأسعار الحالية.
+          يمكنك تصدير أو استيراد وتحديث كامل البيانات (العملاء، الفواتير، والأصناف) من ملفات إكسل (.xlsx, .xls, .csv) بسهولة وسرعة فائقة.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-          <button
-            id="btn-settings-export-invoices-excel"
-            type="button"
-            onClick={handleExportInvoices}
-            className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-[#F0F9F4] hover:bg-[#E2F4EB] text-[#087A35] font-bold text-xs border border-[#087A35]/30 transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-[#087A35]" />
-            <span>تصدير الفواتير والأصناف (Excel)</span>
-          </button>
+        {/* 1. Customers Excel Operations */}
+        <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100/80 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-black text-emerald-950">
+              <Users className="w-4 h-4 text-emerald-700" />
+              <span>بيانات وحسابات العملاء ({customers.length} عميل)</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleExportCustomers}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white hover:bg-emerald-100 text-emerald-900 font-bold text-xs border border-emerald-200 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-700" />
+              <span>تصدير العملاء (Excel)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => importCustFileRef.current?.click()}
+              disabled={isImporting}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>استيراد وتحديث العملاء من Excel</span>
+            </button>
+          </div>
+        </div>
 
-          <button
-            id="btn-settings-export-products-excel"
-            type="button"
-            onClick={handleExportProducts}
-            className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-gray-600" />
-            <span>تصدير قائمة المنتجات (Excel)</span>
-          </button>
+        {/* 2. Invoices Excel Operations */}
+        <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100/80 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-black text-blue-950">
+              <Receipt className="w-4 h-4 text-blue-700" />
+              <span>سجل الفواتير والمبيعات ({invoices.length} فاتورة)</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleExportInvoices}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white hover:bg-blue-100 text-blue-900 font-bold text-xs border border-blue-200 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-blue-700" />
+              <span>تصدير الفواتير والأصناف (Excel)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => importInvFileRef.current?.click()}
+              disabled={isImporting}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>استيراد وتحديث الفواتير من Excel</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3. Products Excel Operations */}
+        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-black text-gray-900">
+              <Layers className="w-4 h-4 text-gray-700" />
+              <span>قائمة الأصناف والأسعار ({products.length} صنف)</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleExportProducts}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white hover:bg-gray-200 text-gray-800 font-bold text-xs border border-gray-200 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-gray-600" />
+              <span>تصدير قائمة المنتجات (Excel)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => importProdFileRef.current?.click()}
+              disabled={isImporting}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gray-800 hover:bg-gray-900 text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>استيراد وتحديث الأصناف من Excel</span>
+            </button>
+          </div>
         </div>
       </div>
 

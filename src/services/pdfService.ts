@@ -215,7 +215,8 @@ export const generatePdfFromElement = async (
       node.style.borderRightColor = convertColorToRgb(borderRight);
     }
 
-    node.style.letterSpacing = 'normal';
+    node.style.letterSpacing = '0px';
+    node.style.fontFeatureSettings = '"liga" 1, "calt" 1';
 
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
@@ -271,6 +272,17 @@ export const generatePdfFromElement = async (
           scrollY: 0,
           width: targetWidth,
           height: targetHeight,
+          onclone: (clonedDoc) => {
+            const style = clonedDoc.createElement('style');
+            style.innerHTML = `
+              * {
+                letter-spacing: 0px !important;
+                word-spacing: normal !important;
+                font-feature-settings: "liga" 1, "calt" 1 !important;
+              }
+            `;
+            clonedDoc.head.appendChild(style);
+          },
         });
 
         const imgData = canvas.toDataURL('image/png', 1.0);
@@ -320,6 +332,17 @@ export const generatePdfFromElement = async (
         scrollY: 0,
         width: targetWidth,
         height: targetHeight,
+        onclone: (clonedDoc) => {
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            * {
+              letter-spacing: 0px !important;
+              word-spacing: normal !important;
+              font-feature-settings: "liga" 1, "calt" 1 !important;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+        },
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);

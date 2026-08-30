@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShopSettings, ActiveTab } from '../types';
-import { Store, Calendar, FileSpreadsheet, Settings, Plus, Cloud, RefreshCw, CloudOff, LogOut } from 'lucide-react';
+import { Store, Calendar, FileSpreadsheet, Settings, Plus, Cloud, CloudDownload, RefreshCw, CloudOff, LogOut } from 'lucide-react';
 import { formatImageUrl, DEFAULT_SHOP_LOGO } from '../utils/imageUtils';
 
 interface HeaderProps {
@@ -91,24 +91,24 @@ export const Header: React.FC<HeaderProps> = ({
                 setActiveTab('settings');
               }
             }}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
               isSyncing
                 ? 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
                 : 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100'
             }`}
             title={
               lastSyncedAt
-                ? `آخر مزامنة سحابية: ${new Date(lastSyncedAt).toLocaleTimeString('ar-JO')}`
-                : 'مزامنة فورية للسحابة'
+                ? `آخر جلب من الإكسل: ${new Date(lastSyncedAt).toLocaleTimeString('ar-JO')}`
+                : 'جلب وتحديث البيانات من Google Sheets الآن'
             }
           >
             {isSyncing ? (
               <RefreshCw className="w-3.5 h-3.5 text-[#087A35] animate-spin" />
             ) : (
-              <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+              <CloudDownload className="w-3.5 h-3.5 text-emerald-600" />
             )}
             <span className="hidden sm:inline">
-              {isSyncing ? 'جاري المزامنة...' : 'مزامنة سحابية'}
+              {isSyncing ? 'جاري الجلب...' : 'مزامنة من الشيت'}
             </span>
           </button>
 

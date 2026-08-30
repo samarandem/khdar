@@ -204,27 +204,19 @@ async function startServer() {
       }
 
       const serverData = getStoredServerData();
-      const forceSheet = req.query.forceSheet === 'true';
 
-      const finalProducts = forceSheet
-        ? ((sheetData.products && sheetData.products.length > 0) ? sheetData.products : (serverData.products || []))
-        : ((serverData.products && serverData.products.length > 0) ? serverData.products : (sheetData.products || []));
-
-      const finalInvoices = forceSheet
-        ? ((sheetData.invoices && sheetData.invoices.length > 0) ? sheetData.invoices : (serverData.invoices || []))
-        : ((serverData.invoices && serverData.invoices.length > 0) ? serverData.invoices : (sheetData.invoices || []));
-
-      const finalCustomers = forceSheet
-        ? ((sheetData.customers && sheetData.customers.length > 0) ? sheetData.customers : (serverData.customers || []))
-        : ((serverData.customers && serverData.customers.length > 0) ? serverData.customers : (sheetData.customers || []));
+      // If we read non-empty data from Google Sheets, prefer it over server memory cache (Google Sheets is the source of truth)
+      const finalProducts = (sheetData.products && sheetData.products.length > 0) ? sheetData.products : (serverData.products || []);
+      const finalInvoices = (sheetData.invoices && sheetData.invoices.length > 0) ? sheetData.invoices : (serverData.invoices || []);
+      const finalCustomers = (sheetData.customers && sheetData.customers.length > 0) ? sheetData.customers : (serverData.customers || []);
 
       const finalSettings = {
         ...(serverData.settings || {}),
         ...(sheetData.settings || {}),
       };
 
-      // Seed server data if it was blank
-      if (!serverData.products?.length && finalProducts.length) {
+      // Keep the server memory/file cache updated with the latest Sheets data to ensure real-time consistency
+      if ((sheetData.products && sheetData.products.length > 0) || (sheetData.invoices && sheetData.invoices.length > 0) || (sheetData.customers && sheetData.customers.length > 0)) {
         saveStoredServerData({
           products: finalProducts,
           invoices: finalInvoices,

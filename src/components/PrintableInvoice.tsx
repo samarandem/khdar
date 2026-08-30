@@ -151,15 +151,43 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             }}
                           />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#087A35', margin: 0, lineHeight: 1.2 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span
+                            style={{
+                              fontSize: '21px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                            }}
+                          >
                             {settings.shopName || 'خضار وفواكه'}
-                          </h1>
-                          <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#4b5563', margin: 0, lineHeight: 1.2 }}>
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '900',
+                              color: '#334155',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                            }}
+                          >
                             {settings.shopSubtitle || 'فواكه طازجة وخضار يومية'}
-                          </p>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '900', color: '#087A35', marginTop: '2px' }}>
-                            <Leaf style={{ width: '13px', height: '13px', color: '#087A35' }} />
+                          </span>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '11.5px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              marginTop: '2px',
+                            }}
+                          >
+                            <Leaf style={{ width: '14px', height: '14px', color: '#087A35' }} />
                             <span>جودة عالية وطازجة</span>
                           </div>
                         </div>
@@ -173,16 +201,39 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                           alignItems: 'center',
                           justifyContent: 'center',
                           textAlign: 'center',
-                          width: '24%',
+                          width: '26%',
                         }}
                       >
-                        <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#087A35', margin: 0, lineHeight: 1.2 }}>
-                          فاتورة بيع
-                        </h2>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '4px', opacity: 0.8 }}>
-                          <span style={{ display: 'block', height: '2px', width: '28px', backgroundColor: '#087A35' }} />
-                          <Leaf style={{ width: '14px', height: '14px', color: '#087A35' }} />
-                          <span style={{ display: 'block', height: '2px', width: '28px', backgroundColor: '#087A35' }} />
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '5px 14px',
+                            borderRadius: '12px',
+                            backgroundColor: '#f0fdf4',
+                            border: '1.5px solid #86efac',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '24px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            فاتورة بيع
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '3px' }}>
+                            <span style={{ display: 'block', height: '2px', width: '24px', backgroundColor: '#087A35', borderRadius: '2px' }} />
+                            <Leaf style={{ width: '13px', height: '13px', color: '#087A35' }} />
+                            <span style={{ display: 'block', height: '2px', width: '24px', backgroundColor: '#087A35', borderRadius: '2px' }} />
+                          </div>
                         </div>
                       </div>
 

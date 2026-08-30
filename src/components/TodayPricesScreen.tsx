@@ -263,7 +263,8 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
           }}
         >
           {(() => {
-            const ITEMS_PER_PAGE = 14;
+            // 16 items per page fits cleanly within A4 height (1100px) with streamlined row heights and compact padding
+            const ITEMS_PER_PAGE = 16;
             const chunks = [];
             for (let i = 0; i < activeProducts.length; i += ITEMS_PER_PAGE) {
               chunks.push(activeProducts.slice(i, i + ITEMS_PER_PAGE));
@@ -273,171 +274,330 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
             return chunksToRender.map((chunk, pageIdx) => (
               <div
                 key={pageIdx}
-                className="pdf-page bg-white p-4 space-y-5 flex flex-col justify-between"
+                className="pdf-page bg-white p-6 space-y-4 flex flex-col justify-between mx-auto"
                 style={{
                   width: '780px',
                   minHeight: '1100px',
                   boxSizing: 'border-box',
                   pageBreakAfter: 'always',
                   backgroundColor: '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: '24px',
                   fontFamily: "'Cairo', 'Tajawal', sans-serif",
                 }}
               >
-                {/* Content wrapper */}
-                <div className="space-y-4">
+                {/* Top content wrapper */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', flex: 1 }}>
                   {/* Header Section */}
-                  <div className="flex flex-row items-center justify-between border-b border-gray-200 pb-4">
-                    {/* Left: Logo and Shop Name */}
-                    <div className="flex flex-col items-center text-center space-y-1 w-1/3">
+                  {pageIdx === 0 ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        borderBottom: '2px solid #e2e8f0',
+                        paddingBottom: '12px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {/* Left: Shop Branding */}
                       <div
-                        className="relative w-20 h-20 flex items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 border border-emerald-200 p-1.5 shadow-2xs"
                         style={{
-                          width: '80px',
-                          height: '80px',
-                          minWidth: '80px',
-                          minHeight: '80px',
-                          maxWidth: '80px',
-                          maxHeight: '80px',
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: '12px',
+                          width: '42%',
                         }}
                       >
-                        <img
-                          src={formatImageUrl(settings.logoUrl)}
-                          alt={settings.shopName}
-                          className="rounded-xl"
+                        <div
                           style={{
-                            width: '100%',
-                            height: '100%',
-                            maxWidth: '70px',
-                            maxHeight: '70px',
-                            objectFit: 'contain',
-                            display: 'block',
-                            imageRendering: '-webkit-optimize-contrast',
-                            WebkitPrintColorAdjust: 'exact',
-                            printColorAdjust: 'exact',
+                            backgroundColor: '#f0fdf4',
+                            border: '2px solid #86efac',
+                            borderRadius: '16px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                            width: '74px',
+                            height: '74px',
+                            minWidth: '74px',
+                            minHeight: '74px',
+                            maxWidth: '74px',
+                            maxHeight: '74px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '4px',
+                            boxSizing: 'border-box',
+                            overflow: 'hidden',
                           }}
-                          loading="eager"
-                          crossOrigin="anonymous"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const imgEl = e.target as HTMLImageElement;
-                            if (imgEl && settings.logoUrl) {
-                              const original = settings.logoUrl.trim();
-                              const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&output=png`;
-                              if (imgEl.src !== proxyUrl && !imgEl.src.includes('images.weserv.nl')) {
-                                imgEl.src = proxyUrl;
-                                return;
+                        >
+                          <img
+                            src={formatImageUrl(settings.logoUrl)}
+                            alt="شعار المحل"
+                            style={{
+                              width: '66px',
+                              height: '66px',
+                              maxWidth: '66px',
+                              maxHeight: '66px',
+                              objectFit: 'contain',
+                              display: 'block',
+                              borderRadius: '10px',
+                              imageRendering: '-webkit-optimize-contrast',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact',
+                            }}
+                            loading="eager"
+                            crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const imgEl = e.target as HTMLImageElement;
+                              if (imgEl && settings.logoUrl) {
+                                const original = settings.logoUrl.trim();
+                                const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(original)}&output=png`;
+                                if (imgEl.src !== proxyUrl && !imgEl.src.includes('images.weserv.nl')) {
+                                  imgEl.src = proxyUrl;
+                                  return;
+                                }
                               }
-                            }
-                            if (imgEl && imgEl.src !== DEFAULT_SHOP_LOGO) {
-                              imgEl.src = DEFAULT_SHOP_LOGO;
-                            }
+                              if (imgEl && imgEl.src !== DEFAULT_SHOP_LOGO) {
+                                imgEl.src = DEFAULT_SHOP_LOGO;
+                              }
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span
+                            style={{
+                              fontSize: '22px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                            }}
+                          >
+                            {settings.shopName || 'خضار وفواكه'}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: '900',
+                              color: '#334155',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                            }}
+                          >
+                            {settings.shopSubtitle || 'فواكه طازجة وخضار يومية'}
+                          </span>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '11.5px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              marginTop: '2px',
+                            }}
+                          >
+                            <Leaf style={{ width: '14px', height: '14px', color: '#087A35' }} />
+                            <span>جودة عالية وطازجة</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Center: Main Title */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          width: '28%',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '5px 14px',
+                            borderRadius: '12px',
+                            backgroundColor: '#f0fdf4',
+                            border: '1.5px solid #86efac',
                           }}
-                        />
+                        >
+                          <span
+                            style={{
+                              fontSize: '24px',
+                              fontWeight: '900',
+                              color: '#087A35',
+                              margin: 0,
+                              lineHeight: 1.2,
+                              direction: 'rtl',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {settings.todayPricesTitle || 'أسعار اليوم'}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '3px' }}>
+                            <span style={{ display: 'block', height: '2px', width: '24px', backgroundColor: '#087A35', borderRadius: '2px' }} />
+                            <Leaf style={{ width: '13px', height: '13px', color: '#087A35' }} />
+                            <span style={{ display: 'block', height: '2px', width: '24px', backgroundColor: '#087A35', borderRadius: '2px' }} />
+                          </div>
+                        </div>
                       </div>
-                      <h1 className="text-base font-extrabold text-[#0B6636] tracking-tight whitespace-nowrap">{settings.shopName}</h1>
-                      <p className="text-[10px] text-gray-500 font-bold whitespace-nowrap">{settings.shopSubtitle}</p>
-                    </div>
 
-                    {/* Center: Leaf Icon, Title, Date */}
-                    <div className="flex flex-col items-center justify-center space-y-1.5 w-1/3 text-center">
-                      <Leaf className="w-8 h-8 text-[#0B6636] fill-[#0B6636]" />
-                      <h2 className="text-3xl font-black text-[#0B6636] tracking-tight">{settings.todayPricesTitle || 'أسعار اليوم'}</h2>
-                      <div className="text-xs font-extrabold text-gray-600">
-                        تاريخ اليوم: {new Date().toLocaleDateString('ar-JO', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {/* Right: Date Badge */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          gap: '6px',
+                          width: '30%',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '155px',
+                            backgroundColor: '#087A35',
+                            border: '1.5px solid #087A35',
+                            borderRadius: '12px',
+                            padding: '4px 6px',
+                            textAlign: 'center',
+                            color: '#ffffff',
+                            boxSizing: 'border-box',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                          }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: '900', paddingBottom: '2px' }}>قائمة الأسعار المعتمدة</div>
+                          <div
+                            style={{
+                              backgroundColor: '#ffffff',
+                              color: '#087A35',
+                              borderRadius: '8px',
+                              padding: '3px 8px',
+                              fontWeight: '900',
+                              fontSize: '13px',
+                              direction: 'ltr',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {new Date().toLocaleDateString('ar-JO', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  ) : (
+                    /* Simplified Header for Page 2+ */
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: '2px solid #e2e8f0',
+                        paddingBottom: '10px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Leaf style={{ width: '18px', height: '18px', color: '#087A35' }} />
+                        <span style={{ fontSize: '14px', fontWeight: '900', color: '#087A35' }}>{settings.shopName}</span>
+                        <span style={{ fontSize: '14px', color: '#94a3b8' }}>|</span>
+                        <span style={{ fontSize: '13px', fontWeight: '900', color: '#334155' }}>تكملة قائمة أسعار اليوم</span>
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: '900', color: '#64748b' }}>
+                        التاريخ: {new Date().toLocaleDateString('ar-JO', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
 
-
-                  </div>
-
-                  {/* High Density Table with Images */}
-                  <div className="border border-[#0B6636]/15 rounded-xl overflow-hidden shadow-3xs">
-                    <table className="w-full text-center border-collapse">
+                  {/* High Density Table with Enlarged Item Box */}
+                  <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1.5px solid #cbd5e1', width: '100%', boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center' }}>
                       <thead>
-                        <tr className="bg-[#0B6636] text-white font-bold text-xs border-b border-[#0B6636]/20" style={{ backgroundColor: '#0B6636' }}>
-                          <th className="py-2 px-1.5 w-12 text-center border-l border-white/10" style={{ borderLeftColor: 'rgba(255,255,255,0.1)' }}>م</th>
-                          <th className="py-2 px-3 text-center border-l border-white/10" style={{ borderLeftColor: 'rgba(255,255,255,0.1)' }}>الصنف</th>
-                          <th className="py-2 px-2 text-center border-l border-white/10" style={{ borderLeftColor: 'rgba(255,255,255,0.1)' }}>الصورة</th>
-                          <th className="py-2 px-2 text-center border-l border-white/10" style={{ borderLeftColor: 'rgba(255,255,255,0.1)' }}>الوحدة</th>
-                          <th className="py-2 px-3 text-center">السعر</th>
+                        <tr style={{ backgroundColor: '#087A35', color: '#ffffff', fontWeight: '900', fontSize: '13px' }}>
+                          <th style={{ padding: '9px 8px', width: '38px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.2)' }}>م</th>
+                          <th style={{ padding: '9px 14px', textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.2)' }}>الصنف</th>
+                          <th style={{ padding: '9px 10px', width: '95px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.2)' }}>الوحدة</th>
+                          <th style={{ padding: '9px 12px', width: '120px', textAlign: 'center' }}>السعر</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#0B6636]/10 bg-white">
+                      <tbody style={{ backgroundColor: '#ffffff' }}>
                         {chunk.map((prod, idx) => {
                           const globalIdx = pageIdx * ITEMS_PER_PAGE + idx;
                           return (
-                            <tr key={prod.id} className="hover:bg-gray-50/40 transition-colors" style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <tr key={prod.id} style={{ borderBottom: '1px solid #e2e8f0', minHeight: '38px' }}>
                               {/* Index */}
-                              <td className="py-1.5 px-1.5 text-center text-xs font-extrabold border-l border-gray-100" style={{ color: '#0B6636', borderLeftColor: '#f3f4f6' }}>
+                              <td style={{ padding: '6px 6px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: '#087A35', borderLeft: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
                                 {globalIdx + 1}
                               </td>
 
-                              {/* Product Name */}
-                              <td className="py-1.5 px-3 text-center border-l border-gray-100" style={{ borderLeftColor: '#f3f4f6' }}>
-                                <div className="flex flex-col items-center justify-center">
-                                  <span className="text-xs font-extrabold text-gray-900">{prod.name}</span>
-                                  <span className="text-[8px] font-bold text-gray-400 mt-0.5">
-                                    {normalizeCategory(prod.category) === 'vegetables'
-                                      ? 'خضار طازجة'
-                                      : normalizeCategory(prod.category) === 'fruits'
-                                      ? 'فواكه طازجة'
-                                      : normalizeCategory(prod.category) === 'herbs'
-                                      ? 'ورقيات وأعشاب'
-                                      : 'بكسات وشوالات'}
-                                  </span>
-                                </div>
-                              </td>
-
-                              {/* Image */}
-                              <td className="py-1.5 px-2 text-center border-l border-gray-100" style={{ borderLeftColor: '#f3f4f6' }}>
-                                <div
-                                  className="rounded-lg overflow-hidden bg-white mx-auto flex items-center justify-center border border-gray-100/80"
-                                  style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    minWidth: '36px',
-                                    minHeight: '36px',
-                                    maxWidth: '36px',
-                                    maxHeight: '36px',
-                                    boxSizing: 'border-box',
-                                  }}
-                                >
+                              {/* Product Name + Image */}
+                              <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 'bold', borderLeft: '1px solid #e2e8f0' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                    <span style={{ fontWeight: '900', fontSize: '13px', color: '#0f172a', lineHeight: 1.2 }}>{prod.name}</span>
+                                    <span style={{ fontSize: '9.5px', fontWeight: 'bold', color: '#64748b', marginTop: '1px' }}>
+                                      {normalizeCategory(prod.category) === 'vegetables'
+                                        ? 'خضار طازجة'
+                                        : normalizeCategory(prod.category) === 'fruits'
+                                        ? 'فواكه طازجة'
+                                        : normalizeCategory(prod.category) === 'herbs'
+                                        ? 'ورقيات وأعشاب'
+                                        : 'بكسات وشوالات'}
+                                    </span>
+                                  </div>
                                   {prod.image && (prod.image.startsWith('http') || prod.image.startsWith('data:')) ? (
                                     <img
                                       src={prod.image}
                                       alt={prod.name}
                                       style={{
-                                        width: '32px',
-                                        height: '32px',
-                                        maxWidth: '32px',
-                                        maxHeight: '32px',
-                                        objectFit: 'contain',
+                                        width: '28px',
+                                        height: '28px',
+                                        minWidth: '28px',
+                                        minHeight: '28px',
+                                        maxWidth: '28px',
+                                        maxHeight: '28px',
+                                        objectFit: 'cover',
+                                        borderRadius: '6px',
+                                        border: '1px solid #cbd5e1',
                                         display: 'block',
+                                        marginInlineStart: '8px',
+                                        backgroundColor: '#ffffff',
                                       }}
-                                      loading="lazy"
+                                      crossOrigin="anonymous"
                                       onError={(e) => {
                                         const imgEl = e.target as HTMLElement;
                                         imgEl.style.display = 'none';
                                       }}
                                     />
                                   ) : (
-                                    <span className="text-lg">{prod.image || '🥗'}</span>
+                                    <span style={{ fontSize: '15px', marginInlineStart: '8px' }}>{prod.image || '🥗'}</span>
                                   )}
                                 </div>
                               </td>
 
                               {/* Unit */}
-                              <td className="py-1.5 px-2 text-center text-xs font-bold text-gray-600 border-l border-gray-100" style={{ borderLeftColor: '#f3f4f6' }}>
+                              <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: '900', fontSize: '12px', color: '#334155', borderLeft: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
                                 {prod.unit}
                               </td>
 
                               {/* Price */}
-                              <td className="py-1.5 px-3 text-center">
-                                <div className="flex flex-col items-center justify-center">
-                                  <span className="text-xs font-black tracking-tight" style={{ color: '#0B6636', display: 'inline-block' }}>
+                              <td style={{ padding: '6px 12px', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                  <span style={{ fontSize: '14px', fontWeight: '900', color: '#087A35' }}>
                                     {prod.price.toFixed(3)}
                                   </span>
-                                  <span className="text-[9px] font-bold text-gray-500 mt-0.5">
+                                  <span style={{ fontSize: '10.5px', fontWeight: '900', color: '#475569' }}>
                                     {settings.currency}
                                   </span>
                                 </div>
@@ -450,14 +610,15 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                   </div>
                 </div>
 
-                {/* Footer Section resembling the image */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                {/* Footer Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', boxSizing: 'border-box', marginTop: 'auto' }}>
                   <div
                     style={{
-                      border: '1px solid rgba(229, 231, 235, 0.8)',
+                      border: '1.5px solid #cbd5e1',
                       borderRadius: '16px',
-                      padding: '12px 14px',
-                      backgroundColor: '#F8FAF9',
+                      padding: '10px 14px',
+                      backgroundColor: '#ffffff',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                       width: '100%',
                       boxSizing: 'border-box',
                     }}
@@ -468,112 +629,117 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                         flexDirection: 'row',
                         alignItems: 'stretch',
                         justifyContent: 'space-between',
-                        gap: '10px',
+                        gap: '8px',
                         width: '100%',
                         boxSizing: 'border-box',
                       }}
                     >
-                      {/* 1: WhatsApp */}
+                      {/* 1: Address (عالي الوضوح والخط بارز) */}
                       <div
                         style={{
-                          flex: 1,
+                          flex: 1.25,
                           display: 'flex',
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'flex-end',
                           gap: '8px',
+                          boxSizing: 'border-box',
                         }}
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#6b7280' }}>للطلب عبر</span>
-                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#0B6636' }}>واتساب</span>
+                          <span style={{ fontSize: '10.5px', fontWeight: '900', color: '#64748b' }}>العنوان</span>
+                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#0f172a', lineHeight: 1.3 }}>
+                            {settings.address || 'عمان - الأردن'}
+                          </span>
                         </div>
                         <div
                           style={{
-                            width: '30px',
-                            height: '30px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
-                            backgroundColor: '#E6F4EA',
+                            backgroundColor: '#fee2e2',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#0B6636',
+                            color: '#dc2626',
                             flexShrink: 0,
                           }}
                         >
-                          <MessageCircle style={{ width: '16px', height: '16px', color: '#0B6636' }} />
+                          <MapPin style={{ width: '17px', height: '17px', color: '#dc2626' }} />
                         </div>
                       </div>
 
                       {/* 2: Delivery */}
                       <div
                         style={{
-                          flex: 1,
+                          flex: 1.1,
                           display: 'flex',
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'flex-end',
                           gap: '8px',
-                          borderRight: '1px solid #e5e7eb',
-                          paddingRight: '10px',
+                          borderRight: '1.5px solid #e2e8f0',
+                          paddingRight: '8px',
+                          boxSizing: 'border-box',
                         }}
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#6b7280' }}>خدمة توصيل</span>
-                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#0B6636' }}>سريعة</span>
+                          <span style={{ fontSize: '10.5px', fontWeight: '900', color: '#64748b' }}>خدمة توصيل</span>
+                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#087A35', lineHeight: 1.3 }}>
+                            سريعة ومضمونة
+                          </span>
                         </div>
                         <div
                           style={{
-                            width: '30px',
-                            height: '30px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
-                            backgroundColor: '#E6F4EA',
+                            backgroundColor: '#dcfce7',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#0B6636',
+                            color: '#087A35',
                             flexShrink: 0,
                           }}
                         >
-                          <Truck style={{ width: '16px', height: '16px', color: '#0B6636' }} />
+                          <Truck style={{ width: '17px', height: '17px', color: '#087A35' }} />
                         </div>
                       </div>
 
-                      {/* 3: Location */}
+                      {/* 3: Whatsapp */}
                       <div
                         style={{
-                          flex: 1.2,
+                          flex: 1.1,
                           display: 'flex',
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'flex-end',
                           gap: '8px',
-                          borderRight: '1px solid #e5e7eb',
-                          paddingRight: '10px',
+                          borderRight: '1.5px solid #e2e8f0',
+                          paddingRight: '8px',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right', maxWidth: '140px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: '900', color: '#374151', lineHeight: 1.2 }}>
-                            {settings.address || 'عمان - ماركا الشمالية'}
-                          </span>
-                          <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#9ca3af' }}>
-                            سوق الخضار المركزي
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                          <span style={{ fontSize: '10.5px', fontWeight: '900', color: '#64748b' }}>واتساب</span>
+                          <span style={{ fontSize: '12.5px', fontWeight: '900', color: '#0f172a', direction: 'ltr', textAlign: 'right' }}>
+                            {settings.whatsapp || '0791234567'}
                           </span>
                         </div>
                         <div
                           style={{
-                            width: '30px',
-                            height: '30px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
-                            backgroundColor: '#E6F4EA',
+                            backgroundColor: '#dcfce7',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#0B6636',
+                            color: '#059669',
                             flexShrink: 0,
                           }}
                         >
-                          <MapPin style={{ width: '16px', height: '16px', color: '#0B6636' }} />
+                          <MessageCircle style={{ width: '17px', height: '17px', color: '#059669' }} />
                         </div>
                       </div>
 
@@ -586,30 +752,31 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                           alignItems: 'center',
                           justifyContent: 'flex-end',
                           gap: '8px',
-                          borderRight: '1px solid #e5e7eb',
-                          paddingRight: '10px',
+                          borderRight: '1.5px solid #e2e8f0',
+                          paddingRight: '8px',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', direction: 'ltr' }}>
-                          <span style={{ fontSize: '12px', fontWeight: '900', color: '#374151' }}>{settings.phone || '0791234567'}</span>
-                          {settings.whatsapp && settings.whatsapp !== settings.phone && (
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#9ca3af', marginTop: '2px' }}>{settings.whatsapp}</span>
-                          )}
+                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                          <span style={{ fontSize: '10.5px', fontWeight: '900', color: '#64748b' }}>للطلب والاتصال</span>
+                          <span style={{ fontSize: '12.5px', fontWeight: '900', color: '#0f172a', direction: 'ltr', textAlign: 'right' }}>
+                            {settings.phone || '0791234567'}
+                          </span>
                         </div>
                         <div
                           style={{
-                            width: '30px',
-                            height: '30px',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
-                            backgroundColor: '#E6F4EA',
+                            backgroundColor: '#dcfce7',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#0B6636',
+                            color: '#087A35',
                             flexShrink: 0,
                           }}
                         >
-                          <Phone style={{ width: '16px', height: '16px', color: '#0B6636' }} />
+                          <Phone style={{ width: '17px', height: '17px', color: '#087A35' }} />
                         </div>
                       </div>
                     </div>
@@ -618,7 +785,7 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                   {/* Green Bottom Solid Strip */}
                   <div
                     style={{
-                      backgroundColor: '#0B6636',
+                      backgroundColor: '#087A35',
                       color: '#ffffff',
                       padding: '8px 16px',
                       borderRadius: '12px',
@@ -634,7 +801,7 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Leaf style={{ width: '14px', height: '14px', color: '#ffffff', flexShrink: 0 }} />
-                      <span>جودة عالية ... طزاجة يومية</span>
+                      <span>{settings.slogan || 'جودة عالية ... طازجة يومية'}</span>
                     </div>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', opacity: 0.85 }}>
                       صفحة {pageIdx + 1} من {chunksToRender.length}

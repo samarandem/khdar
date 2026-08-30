@@ -918,15 +918,116 @@ export const fetchAllDataFromGoogleSheets = async (
 
   // 2. Parse Invoices
   const invRows = valueRanges[1]?.values || [];
-  if (invRows.length > 1) {
-    const startInvRow = (invRows[0]?.[0] === 'رقم الفاتورة' || invRows[0]?.[0] === 'ID') ? 1 : 0;
+  if (invRows.length > 0) {
+    const firstInvRow = invRows[0].map((c: any) => String(c || '').trim().toLowerCase());
+    let invIdIdx = firstInvRow.findIndex((c: string) => c.includes('فاتورة') || c === 'id' || c.includes('invoice') || c.includes('رقم'));
+    let invDateIdx = firstInvRow.findIndex((c: string) => c.includes('تاريخ') || c.includes('date'));
+    let invTimeIdx = firstInvRow.findIndex((c: string) => c.includes('وقت') || c.includes('time'));
+    let invCustIdx = firstInvRow.findIndex((c: string) => c.includes('عميل') || c.includes('زبون') || c.includes('مشتري') || c.includes('customer'));
+    let invPhoneIdx = firstInvRow.findIndex((c: string) => c.includes('هاتف') || c.includes('موبايل') || c.includes('جوال') || c.includes('phone'));
+    let invSubtotalIdx = firstInvRow.findIndex((c: string) => c.includes('فرعي') || c.includes('subtotal') || c.includes('صافي'));
+    let invDelIdx = firstInvRow.findIndex((c: string) => c.includes('توصيل') || c.includes('delivery'));
+    let invDiscIdx = firstInvRow.findIndex((c: string) => c.includes('خصم') || c.includes('discount'));
+    let invTotalIdx = firstInvRow.findIndex((c: string) => c.includes('إجمالي') || c.includes('اجمالي') || c.includes('مجموع') || c.includes('total') || c.includes('مبلغ'));
+    let invStatusIdx = firstInvRow.findIndex((c: string) => c.includes('حالة') || c.includes('status'));
+    let invNotesIdx = firstInvRow.findIndex((c: string) => c.includes('ملاحظ') || c.includes('note'));
+    let invItemsIdx = firstInvRow.findIndex((c: string) => c.includes('أصناف') || c.includes('اصناف') || c.includes('items') || c.includes('تفاصيل'));
+
+    const hasInvHeader = invIdIdx !== -1 || invCustIdx !== -1 || invTotalIdx !== -1 || invDateIdx !== -1;
+    const startInvRow = hasInvHeader ? 1 : 0;
+
+    if (invIdIdx === -1) invIdIdx = 0;
+    if (invDateIdx === -1) invDateIdx = 1;
+    if (invTimeIdx === -1) invTimeIdx = 2;
+    if (invCustIdx === -1) invCustIdx = 3;
+    if (invPhoneIdx === -1) invPhoneIdx = 4;
+    if (invSubtotalIdx === -1) invSubtotalIdx = 5;
+    if (invDelIdx === -1) invDelIdx = 6;
+    if (invDiscIdx === -1) invDiscIdx = 7;
+    if (invTotalIdx === -1) invTotalIdx = 8;
+    if (invStatusIdx === -1) invStatusIdx = 9;
+    if (invNotesIdx === -1) invNotesIdx = 10;
+    if (invItemsIdx === -1) invItemsIdx = 11;
+
+    const parseSheetDate = (val: any): string => {
+      if (val === undefined || val === null || val === '') {
+        return new Date().toISOString().split('T')[0];
+      }
+      const num = Number(val);
+      if (!isNaN(num) && num > 30000 && num < 70000) {
+        try {
+          const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+          if (!isNaN(jsDate.getTime())) {
+            return jsDate.toISOString().split('T')[0];
+          }
+        } catch {}
+      }
+      const str = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        return str.slice(0, 10);
+      }
+      const parts = str.split(/[/\-.]/);
+      if (parts.length === 3) {
+        const p0 = parseInt(parts[0], 10);
+        const p1 = parseInt(parts[1], 10);
+        const p2 = parseInt(parts[2], 10);
+        if (p0 > 1000) {
+          const mm = String(p1).padStart(2, '0');
+          const dd = String(p2).padStart(2, '0');
+          return `${p0}-${mm}-${dd}`;
+        } else if (p2 > 1000) {
+          const yyyy = p2;
+          const mm = String(p1 <= 12 ? p1 : p0).padStart(2, '0');
+          const dd = String(p1 <= 12 ? p0 : p1).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+      }
+      return str || new Date().toISOString().split('T')[0];
+    };
+
+    const parseSheetTime = (val: any): string => {
+      if (val === undefined || val === null || val === '') {
+        return new Date().toLocaleTimeString('ar-JO', { hour: '2-digit', minute: '2-digit', hour12: false });
+      }
+      const num = Number(val);
+      if (!isNaN(num) && num >= 0 && num < 1) {
+        try {
+          const totalSeconds = Math.round(num * 24 * 3600);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        } catch {}
+      }
+      return String(val).trim();
+    };
+
     for (let i = startInvRow; i < invRows.length; i++) {
       const row = invRows[i];
-      if (row && row[0] && row[1]) {
-        let items = [];
-        try {
+      if (!row || row.length === 0) continue;
+
+      const rawId = String(row[invIdIdx] || '').trim();
+      const rawCust = String(row[invCustIdx] || '').trim();
+      const rawTotal = row[invTotalIdx];
+
+      if (rawId === 'رقم الفاتورة' || rawId === 'ID' || rawCust === 'اسم العميل') continue;
+      if (!rawId && !rawCust && (rawTotal === undefined || rawTotal === null || rawTotal === '')) continue;
+
+      let items: any[] = [];
+      try {
+        let foundItems = false;
+        // Check designated items column first
+        if (invItemsIdx !== -1 && row[invItemsIdx]) {
+          const itCell = String(row[invItemsIdx]).trim();
+          if (itCell.startsWith('[')) {
+            const parsed = JSON.parse(itCell);
+            if (Array.isArray(parsed)) {
+              items = parsed;
+              foundItems = true;
+            }
+          }
+        }
+        if (!foundItems) {
           // Scan backwards for JSON array of items
-          let foundItems = false;
           for (let k = row.length - 1; k >= 0; k--) {
             const cell = row[k];
             if (typeof cell === 'string' && cell.trim().startsWith('[')) {
@@ -937,36 +1038,36 @@ export const fetchAllDataFromGoogleSheets = async (
                   foundItems = true;
                   break;
                 }
-              } catch {
-                // Keep scanning
-              }
+              } catch {}
             }
           }
-          if (!foundItems && row[12]) {
-            const raw = typeof row[12] === 'string' ? JSON.parse(row[12]) : row[12];
-            if (Array.isArray(raw)) items = raw;
-          }
-        } catch (e) {
-          console.warn('Failed to parse items JSON:', e);
         }
-
-        parsedInvoices.push(
-          sanitizeInvoice({
-            id: String(row[0]),
-            date: String(row[1]),
-            time: String(row[2] || '12:00'),
-            customerName: String(row[3] || 'زبون عام'),
-            customerPhone: String(row[4] || ''),
-            subtotal: parseArabicFloat(row[5]) || 0,
-            deliveryFee: parseArabicFloat(row[6]) || 0,
-            discount: parseArabicFloat(row[7]) || 0,
-            total: parseArabicFloat(row[8]) || 0,
-            status: (row[9] === 'معلقة' || row[9] === 'pending') ? 'pending' : 'paid',
-            notes: String(row[10] || ''),
-            items: items,
-          })
-        );
+      } catch (e) {
+        console.warn('Failed to parse items JSON:', e);
       }
+
+      const generatedId = rawId || `INV-${Date.now().toString().slice(-4)}-${i}`;
+      const parsedSub = parseArabicFloat(row[invSubtotalIdx]) || 0;
+      const parsedDel = parseArabicFloat(row[invDelIdx]) || 0;
+      const parsedDisc = parseArabicFloat(row[invDiscIdx]) || 0;
+      const parsedTot = parseArabicFloat(rawTotal) || (parsedSub + parsedDel - parsedDisc) || 0;
+
+      parsedInvoices.push(
+        sanitizeInvoice({
+          id: generatedId,
+          date: parseSheetDate(row[invDateIdx]),
+          time: parseSheetTime(row[invTimeIdx]),
+          customerName: rawCust || 'زبون عام',
+          customerPhone: String(row[invPhoneIdx] || ''),
+          subtotal: parsedSub,
+          deliveryFee: parsedDel,
+          discount: parsedDisc,
+          total: parsedTot,
+          status: (String(row[invStatusIdx] || '').includes('معلق') || String(row[invStatusIdx] || '') === 'pending') ? 'pending' : 'paid',
+          notes: String(row[invNotesIdx] || ''),
+          items: items,
+        })
+      );
     }
   }
 

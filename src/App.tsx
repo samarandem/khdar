@@ -30,6 +30,7 @@ import {
   autoSyncCustomers,
   autoSyncSettings,
   fetchSharedSheetConfigFromServer,
+  DEFAULT_SHEET_ID,
 } from './services/googleSheetsService';
 import { initAuthListener } from './services/googleAuthService';
 
@@ -285,36 +286,72 @@ export default function App() {
     };
   }, []);
 
-  // Quick 1-touch Cloud Sync from Header to Google Sheets
+  // Quick 1-touch Cloud Sync from Header to Google Sheets (Exclusively Fetch/Pull from Google Sheets)
   const handleHeaderSyncNow = async () => {
     setCloudStatus((prev) => ({ ...prev, isSyncing: true, error: undefined }));
-    setSyncToast('جاري المزامنة مع Google Sheets...');
+    setSyncToast('جاري جلب أحدث البيانات من Google Sheets...');
     try {
-      let lastSync = new Date().toISOString();
-      if (isCloudConnected()) {
-        const config = getStoredSheetConfig();
-        const token = getStoredAccessToken();
-        lastSync = await syncAllDataToGoogleSheets(token, config.id, products, invoices, settings, customers);
+      const config = getStoredSheetConfig();
+      const token = getStoredAccessToken();
+      const targetSheetId = config.id || DEFAULT_SHEET_ID;
+      const result = await fetchAllDataFromGoogleSheets(token, targetSheetId);
+
+      if (Array.isArray(result.products) && result.products.length > 0) {
+        const cleaned = result.products.map((p) => {
+          let price = p.price;
+          if (price === undefined || price === null || isNaN(price)) {
+            const match = INITIAL_PRODUCTS.find(
+              (ip) => ip.name.trim().toLowerCase() === p.name.trim().toLowerCase()
+            );
+            if (match) price = match.price;
+          }
+          return {
+            ...p,
+            price: price || 0,
+          };
+        });
+        const sanitized = sanitizeProductPrices(cleaned);
+        setProducts(sanitized);
+        saveStoredProducts(sanitized);
+      } else if (Array.isArray(result.products) && result.products.length === 0) {
+        setProducts([]);
+        saveStoredProducts([]);
       }
 
+      if (Array.isArray(result.invoices)) {
+        setInvoices(result.invoices);
+        saveStoredInvoices(result.invoices);
+      }
+      if (Array.isArray(result.customers)) {
+        setCustomers(result.customers);
+        saveStoredCustomers(result.customers);
+      }
+      if (result.settings && Object.keys(result.settings).length > 0) {
+        setSettings((prev) => {
+          const merged = { ...prev, ...result.settings };
+          saveStoredSettings(merged);
+          return merged;
+        });
+      }
+
+      const now = new Date().toISOString();
       setCloudStatus((prev) => ({
         ...prev,
         isConnected: true,
         isSyncing: false,
-        lastSyncedAt: lastSync,
+        lastSyncedAt: now,
         error: undefined,
       }));
-      setSyncToast('تمت المزامنة وحفظ البيانات في Google Sheets بنجاح! 🟢');
+      setSyncToast('تم جلب وتحديث كافة البيانات من Google Sheets بنجاح! 🟢');
       setTimeout(() => setSyncToast(null), 3500);
     } catch (e: any) {
-      console.warn('Header sync notice:', e?.message || e);
+      console.warn('Header sync fetch notice:', e?.message || e);
       setCloudStatus((prev) => ({
         ...prev,
         isSyncing: false,
-        lastSyncedAt: new Date().toISOString(),
         error: undefined,
       }));
-      setSyncToast('تم حفظ البيانات محلياً وفي Google Sheets 🟢');
+      setSyncToast('تعذر جلب البيانات من Google Sheets، يرجى التحقق من الاتصال');
       setTimeout(() => setSyncToast(null), 3500);
     }
   };
@@ -544,6 +581,50 @@ export default function App() {
     }
   };
 
+  // Handler: Batch Update Customers (from Excel Import)
+  const handleBatchUpdateCustomers = (updatedCustomers: Customer[]) => {
+    setCustomers(updatedCustomers);
+    saveStoredCustomers(updatedCustomers);
+
+    if (isCloudConnected()) {
+      setCloudStatus((prev) => ({ ...prev, isSyncing: true }));
+      autoSyncCustomers(updatedCustomers)
+        .then((synced) => {
+          setCloudStatus((prev) => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncedAt: synced ? new Date().toISOString() : prev.lastSyncedAt,
+          }));
+        })
+        .catch((err) => {
+          console.warn('Auto sync batch customers update error:', err);
+          setCloudStatus((prev) => ({ ...prev, isSyncing: false }));
+        });
+    }
+  };
+
+  // Handler: Batch Update Invoices (from Excel Import)
+  const handleBatchUpdateInvoices = (updatedInvoices: Invoice[]) => {
+    setInvoices(updatedInvoices);
+    saveStoredInvoices(updatedInvoices);
+
+    if (isCloudConnected()) {
+      setCloudStatus((prev) => ({ ...prev, isSyncing: true }));
+      autoSyncInvoices(updatedInvoices)
+        .then((synced) => {
+          setCloudStatus((prev) => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncedAt: synced ? new Date().toISOString() : prev.lastSyncedAt,
+          }));
+        })
+        .catch((err) => {
+          console.warn('Auto sync batch invoices update error:', err);
+          setCloudStatus((prev) => ({ ...prev, isSyncing: false }));
+        });
+    }
+  };
+
   // Handler: Reset Products to Official Catalog
   const handleResetOfficialPrices = () => {
     const official = resetProductsToOfficialCatalog();
@@ -745,6 +826,7 @@ export default function App() {
                 onViewInvoice={(inv) => setSelectedInvoiceForDetail(inv)}
                 onPrintInvoice={handlePrintInvoice}
                 onExportExcel={handleExportAllExcel}
+                onImportInvoices={handleBatchUpdateInvoices}
                 onEditInvoice={(inv) => setSelectedInvoiceForEdit(inv)}
                 onDeleteInvoice={(inv) => setSelectedInvoiceForDelete(inv)}
                 onUpdateInvoice={handleSaveInvoiceEdit}
@@ -772,6 +854,7 @@ export default function App() {
                 onAddCustomer={handleAddCustomer}
                 onUpdateCustomer={handleUpdateCustomer}
                 onDeleteCustomer={handleDeleteCustomer}
+                onBatchUpdateCustomers={handleBatchUpdateCustomers}
                 onSelectCustomerInvoices={(custName) => {
                   setActiveTab('invoices');
                 }}
@@ -803,6 +886,9 @@ export default function App() {
                 customers={customers}
                 onSaveSettings={handleSaveSettings}
                 onResetData={handleResetData}
+                onBatchUpdateProducts={handleBatchUpdateProducts}
+                onBatchUpdateCustomers={handleBatchUpdateCustomers}
+                onBatchUpdateInvoices={handleBatchUpdateInvoices}
                 onDataLoadedFromSheets={handleDataLoadedFromSheets}
                 onLogout={settings.requireLogin !== false ? handleLogout : undefined}
               />

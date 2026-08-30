@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Customer, Invoice, ShopSettings } from '../types';
+import { exportCustomersToExcel, importCustomersFromExcel } from '../services/excelService';
 import {
   Users,
   UserPlus,
@@ -25,7 +26,11 @@ import {
   ArrowUpRight,
   Clock,
   CheckCircle2,
-  Filter
+  Filter,
+  FileSpreadsheet,
+  Upload,
+  Download,
+  Loader2
 } from 'lucide-react';
 
 interface CustomersScreenProps {
@@ -35,6 +40,7 @@ interface CustomersScreenProps {
   onAddCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => void;
   onUpdateCustomer: (customer: Customer) => void;
   onDeleteCustomer: (id: string) => void;
+  onBatchUpdateCustomers?: (customers: Customer[]) => void;
   onSelectCustomerInvoices?: (customerName: string) => void;
 }
 
@@ -48,6 +54,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
   onAddCustomer,
   onUpdateCustomer,
   onDeleteCustomer,
+  onBatchUpdateCustomers,
   onSelectCustomerInvoices,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,6 +62,14 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
   const [sortBy, setSortBy] = useState<CustomerSortOption>('highest_spent');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  // Excel Import state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importNotification, setImportNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -229,10 +244,75 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
     window.open(`tel:${phoneNumber}`, '_self');
   };
 
+  const handleExportExcel = () => {
+    try {
+      exportCustomersToExcel(customers, invoices, settings.currency);
+    } catch (err: any) {
+      setImportNotification({
+        type: 'error',
+        message: err.message || 'حدث خطأ أثناء تصدير العملاء',
+      });
+    }
+  };
+
+  const handleTriggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportNotification(null);
+
+    try {
+      const result = await importCustomersFromExcel(file, customers);
+      if (onBatchUpdateCustomers) {
+        onBatchUpdateCustomers(result.updatedCustomers);
+      } else {
+        // Fallback: update individual items
+        result.updatedCustomers.forEach((cust) => {
+          const existing = customers.find((c) => c.id === cust.id);
+          if (existing) {
+            onUpdateCustomer(cust);
+          } else {
+            onAddCustomer(cust);
+          }
+        });
+      }
+
+      setImportNotification({
+        type: 'success',
+        message: `تم استيراد بيانات العملاء بنجاح: تم تحديث ${result.matchedCount} عميل وإضافة ${result.addedCount} عميل جديد.`,
+      });
+    } catch (err: any) {
+      setImportNotification({
+        type: 'error',
+        message: err.message || 'حدث خطأ أثناء قراءة ملف العملاء من Excel',
+      });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-5 pb-24 animate-in fade-in duration-200">
+      {/* Hidden File Input for Excel Import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx, .xls, .csv"
+        onChange={handleImportExcel}
+        className="hidden"
+      />
+
       {/* Top Header & Actions */}
-      <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-2xs shrink-0">
             <Users className="w-5 h-5" />
@@ -245,14 +325,68 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-all cursor-pointer text-xs"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>إضافة عميل جديد</span>
-        </button>
+        <div className="flex items-center flex-wrap gap-2 w-full md:w-auto">
+          {/* Export to Excel */}
+          <button
+            onClick={handleExportExcel}
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs"
+            title="تصدير جدول العملاء إلى Excel"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-700" />
+            <span>تصدير Excel</span>
+          </button>
+
+          {/* Import from Excel */}
+          <button
+            onClick={handleTriggerFileInput}
+            disabled={isImporting}
+            className="flex-1 sm:flex-none px-3.5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold rounded-xl border border-blue-200 shadow-2xs flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs disabled:opacity-50"
+            title="استيراد وتحديث العملاء من ملف Excel"
+          >
+            {isImporting ? (
+              <Loader2 className="w-3.5 h-3.5 text-blue-700 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5 text-blue-700" />
+            )}
+            <span>{isImporting ? 'جاري الاستيراد...' : 'استيراد Excel'}</span>
+          </button>
+
+          {/* Add Customer Button */}
+          <button
+            onClick={handleOpenAdd}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-all cursor-pointer text-xs"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>إضافة عميل جديد</span>
+          </button>
+        </div>
       </div>
+
+      {/* Import / Action Notification Banner */}
+      {importNotification && (
+        <div
+          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-bold ${
+            importNotification.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-red-50 border-red-200 text-red-900'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {importNotification.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span>{importNotification.message}</span>
+          </div>
+          <button
+            onClick={() => setImportNotification(null)}
+            className="p-1 hover:bg-black/5 rounded-lg text-gray-500 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* 4 Main Analytics Metric Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

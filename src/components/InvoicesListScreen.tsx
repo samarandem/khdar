@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Invoice, ShopSettings } from '../types';
+import { importInvoicesFromExcel } from '../services/excelService';
 import {
   Search,
   Receipt,
@@ -12,6 +13,9 @@ import {
   Trash2,
   Eye,
   Printer,
+  Upload,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface InvoicesListScreenProps {
@@ -22,6 +26,7 @@ interface InvoicesListScreenProps {
   onPrintInvoice?: (invoice: Invoice) => void;
   onStartNewInvoice: () => void;
   onExportExcel?: () => void;
+  onImportInvoices?: (invoices: Invoice[]) => void;
   onEditInvoice?: (invoice: Invoice) => void;
   onDeleteInvoice?: (invoice: Invoice) => void;
   onUpdateInvoice?: (invoice: Invoice) => void;
@@ -39,13 +44,55 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
   onPrintInvoice,
   onStartNewInvoice,
   onExportExcel,
+  onImportInvoices,
   onEditInvoice,
   onDeleteInvoice,
   onUpdateInvoice,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importNotification, setImportNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
   const handleInvoiceClick = (invoice: Invoice) => {
     if (onSelectInvoice) onSelectInvoice(invoice);
     else if (onViewInvoice) onViewInvoice(invoice);
+  };
+
+  const handleTriggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportNotification(null);
+
+    try {
+      const result = await importInvoicesFromExcel(file, invoices);
+      if (onImportInvoices) {
+        onImportInvoices(result.updatedInvoices);
+      }
+      setImportNotification({
+        type: 'success',
+        message: `تم استيراد الفواتير بنجاح: تم تحديث ${result.matchedCount} فاتورة وإضافة ${result.addedCount} فاتورة جديدة.`,
+      });
+    } catch (err: any) {
+      setImportNotification({
+        type: 'error',
+        message: err.message || 'حدث خطأ أثناء قراءة ملف الفواتير من Excel',
+      });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,8 +205,17 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
 
   return (
     <div className="space-y-3.5 pb-28 animate-in fade-in duration-200">
-      {/* Top Title & Excel Export (High Density) */}
-      <div className="flex items-center justify-between">
+      {/* Hidden File Input for Excel Import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx, .xls, .csv"
+        onChange={handleImportExcel}
+        className="hidden"
+      />
+
+      {/* Top Title & Excel Export/Import (High Density) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
           <h2 className="font-extrabold text-base text-[#1A1A1A]">سجل الفواتير</h2>
           <p className="text-[11px] text-gray-500 font-medium">
@@ -167,15 +223,61 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
           </p>
         </div>
 
-        <button
-          id="btn-invoices-export-excel"
-          onClick={onExportExcel}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F9F4] hover:bg-[#E2F4EB] text-[#087A35] text-xs font-bold border border-[#087A35]/30 transition-colors"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-[#087A35]" />
-          <span>تصدير Excel</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Export to Excel */}
+          <button
+            id="btn-invoices-export-excel"
+            onClick={onExportExcel}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F9F4] hover:bg-[#E2F4EB] text-[#087A35] text-xs font-bold border border-[#087A35]/30 transition-colors cursor-pointer"
+            title="تصدير الفواتير إلى ملف Excel"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[#087A35]" />
+            <span>تصدير Excel</span>
+          </button>
+
+          {/* Import from Excel */}
+          <button
+            id="btn-invoices-import-excel"
+            onClick={handleTriggerFileInput}
+            disabled={isImporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold border border-blue-200 transition-colors cursor-pointer disabled:opacity-50"
+            title="استيراد وتحديث الفواتير من ملف Excel"
+          >
+            {isImporting ? (
+              <Loader2 className="w-3.5 h-3.5 text-blue-700 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5 text-blue-700" />
+            )}
+            <span>{isImporting ? 'جاري الاستيراد...' : 'استيراد Excel'}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Import Notification Banner */}
+      {importNotification && (
+        <div
+          className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold ${
+            importNotification.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-red-50 border-red-200 text-red-900'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {importNotification.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span>{importNotification.message}</span>
+          </div>
+          <button
+            onClick={() => setImportNotification(null)}
+            className="p-1 hover:bg-black/5 rounded-lg text-gray-500 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Search, Status & Date Filter Card */}
       <div className="bg-white rounded-2xl p-3 shadow-2xs border border-gray-200 space-y-3">

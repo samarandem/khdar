@@ -252,7 +252,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* 4. Recent Invoices Section (High Density Table & Mobile List) */}
       <div className="bg-white rounded-2xl border border-gray-200/90 shadow-2xs overflow-hidden">
-        <div className="p-3.5 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="p-3.5 border-b border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <h2 className="font-bold text-sm text-[#1A1A1A]">الفواتير المسجلة</h2>
             <span className="text-[11px] font-bold text-[#087A35] bg-[#F0F9F4] px-2 py-0.5 rounded-full border border-[#087A35]/20">
@@ -261,11 +261,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
 
           {/* Filter Buttons for All, Today, Yesterday */}
-          <div className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-xl text-xs">
+          <div className="flex items-center gap-1 bg-gray-100/80 p-0.5 rounded-xl text-xs overflow-x-auto no-scrollbar w-full md:w-auto max-w-full shrink-0">
             <button
               type="button"
               onClick={() => setInvoiceFilter('all')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap ${
                 invoiceFilter === 'all'
                   ? 'bg-white text-[#087A35] shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
@@ -276,7 +276,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <button
               type="button"
               onClick={() => setInvoiceFilter('today')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap ${
                 invoiceFilter === 'today'
                   ? 'bg-white text-[#087A35] shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
@@ -287,7 +287,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <button
               type="button"
               onClick={() => setInvoiceFilter('yesterday')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap ${
                 invoiceFilter === 'yesterday'
                   ? 'bg-white text-[#087A35] shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
@@ -297,29 +297,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-start">
             <button
               id="btn-home-view-all-invoices"
               onClick={() => navigateTab('invoices')}
-              className="text-xs font-bold text-[#087A35] hover:text-[#0A8F3D] flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-[#087A35] hover:text-[#0A8F3D] flex items-center gap-1 transition-colors whitespace-nowrap"
             >
               <span>عرض سجل الفواتير</span>
               <ArrowLeft className="w-3.5 h-3.5" />
             </button>
 
             {filteredInvoices.length > 0 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 flex-wrap">
                 <button
                   type="button"
                   onClick={handlePdfFiltered}
                   disabled={isPdfLoading}
-                  className="flex items-center gap-1.5 bg-[#1B4D3E] hover:bg-[#153B2F] text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs transition-all no-print disabled:opacity-50"
+                  className="flex items-center gap-1 bg-[#1B4D3E] hover:bg-[#153B2F] text-white px-2 py-1 rounded-lg font-bold text-[11px] shadow-xs transition-all no-print disabled:opacity-50 whitespace-nowrap"
                   title="تحميل PDF للفواتير المعروضة"
                 >
                   {isPdfLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    <FileDown className="w-3.5 h-3.5" />
+                    <FileDown className="w-3 h-3" />
                   )}
                   <span>
                     {invoiceFilter === 'today'
@@ -333,10 +333,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={handlePrintFiltered}
-                  className="flex items-center gap-1.5 bg-[#087A35] hover:bg-[#07682d] text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs transition-all no-print"
+                  className="flex items-center gap-1 bg-[#087A35] hover:bg-[#07682d] text-white px-2 py-1 rounded-lg font-bold text-[11px] shadow-xs transition-all no-print whitespace-nowrap"
                   title="طباعة الفواتير المعروضة"
                 >
-                  <Printer className="w-3.5 h-3.5" />
+                  <Printer className="w-3 h-3" />
                   <span>
                     {invoiceFilter === 'today'
                       ? 'طباعة فواتير اليوم'
@@ -499,18 +499,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   key={inv.id ? `${inv.id}-${idx}` : `inv-card-${idx}`}
                   id={`invoice-card-${inv.id || idx}`}
                   onClick={() => handleInvoiceClick(inv)}
-                  className="p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer flex items-center justify-between gap-3"
+                  className="p-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-9 h-9 rounded-xl bg-[#F0F9F4] text-[#087A35] flex items-center justify-center font-bold text-xs border border-[#087A35]/20 shrink-0">
                       <Receipt className="w-4 h-4" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-extrabold text-xs text-[#087A35]">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-extrabold text-xs text-[#087A35] shrink-0">
                           {inv.id}
                         </span>
-                        <span className="font-bold text-xs text-[#1A1A1A]">
+                        <span className="font-bold text-xs text-[#1A1A1A] truncate">
                           {inv.customerName}
                         </span>
                       </div>
@@ -522,8 +522,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-left">
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="text-left flex flex-col items-end">
                       <div className="font-black text-sm text-[#087A35]">
                         {inv.total.toFixed(2)}{' '}
                         <span className="text-[10px] font-normal text-gray-500">
@@ -539,67 +539,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             onUpdateInvoice({ ...inv, status: nextStatus });
                           }
                         }}
-                        className={`mt-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+                        className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border transition-all ${
                           inv.status === 'pending'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                         }`}
-                        title="اضغط لتغيير الحالة"
+                        title="تغيير الحالة"
                       >
                         {inv.status === 'pending' ? (
                           <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                            <span className="w-1 h-1 rounded-full bg-amber-600 animate-pulse"></span>
                             <span>ذمم</span>
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-700" />
                             <span>مدفوعة</span>
                           </>
                         )}
                       </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 border-r border-gray-100 pr-1.5 mr-0.5">
-                      {onPrintInvoice && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onPrintInvoice(inv);
-                          }}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-[#087A35] hover:bg-[#F0F9F4] active:scale-95 transition-all"
-                          title="طباعة"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {onEditInvoice && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditInvoice(inv);
-                          }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 active:scale-95 transition-all"
-                          title="تعديل"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {onDeleteInvoice && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteInvoice(inv);
-                          }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 active:scale-95 transition-all"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -626,7 +584,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Printable container for consolidated batch invoices of today/yesterday/all */}
       <div
         id="printable-daily-invoices-doc"
-        className="opacity-0 pointer-events-none absolute -left-[9999px] top-0 print:opacity-100 print:pointer-events-auto print:static"
+        className="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none print:static print:w-auto print:h-auto print:opacity-100 print:pointer-events-auto"
       >
         <PrintableBatchInvoices
           invoices={filteredInvoices}
