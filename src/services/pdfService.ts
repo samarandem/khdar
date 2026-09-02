@@ -39,7 +39,7 @@ export const printHtmlElement = async (
   printStyle.innerHTML = `
     @page {
       size: A4 portrait;
-      margin: 0mm !important;
+      margin: 0;
     }
     @media print {
       body, html {
@@ -56,7 +56,7 @@ export const printHtmlElement = async (
         width: 100% !important; 
         max-width: 100% !important;
         margin: 0 !important; 
-        padding: 10mm !important; 
+        padding: 0 !important; 
         box-sizing: border-box !important;
         background: #fff !important;
       }
@@ -73,6 +73,9 @@ export const printHtmlElement = async (
       #native-print-container [id^="printable-"] {
         width: 100% !important;
         max-width: 100% !important;
+        min-height: 296mm !important;
+        padding: 10mm !important;
+        box-sizing: border-box !important;
       }
       #native-print-container * { 
         overflow: visible !important; 
