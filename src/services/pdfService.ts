@@ -37,20 +37,41 @@ export const printHtmlElement = async (
   const printStyle = document.createElement('style');
   printStyle.id = 'native-print-style';
   printStyle.innerHTML = `
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
     @media print {
+      body, html {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+      }
       body > *:not(#native-print-container) { display: none !important; }
       #native-print-container { 
         display: block !important; 
         position: absolute; 
         left: 0; 
         top: 0; 
-        width: 100%; 
-        margin: 0; 
-        padding: 0; 
+        width: 100% !important; 
+        max-width: 100% !important;
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: #fff !important;
+      }
+      #native-print-container > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
       }
       #native-print-container * { 
         overflow: visible !important; 
-        page-break-inside: auto;
+      }
+      table, tr, td, th, tbody, thead, tfoot {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
   `;
