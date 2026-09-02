@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Invoice, ShopSettings } from '../types';
 import { importInvoicesFromExcel } from '../services/excelService';
+import { PrintableBatchInvoices } from './PrintableBatchInvoices';
+import { printHtmlElement } from '../services/pdfService';
 import {
   Search,
   Receipt,
@@ -32,9 +34,9 @@ interface InvoicesListScreenProps {
   onUpdateInvoice?: (invoice: Invoice) => void;
 }
 
-type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month';
+type DateFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 type StatusFilter = 'all' | 'paid' | 'pending';
-type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
+type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest' | 'status';
 
 export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
   invoices,
@@ -97,8 +99,27 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
+
+  const toggleSelection = (id: string) => {
+    const newSet = new Set(selectedInvoiceIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedInvoiceIds(newSet);
+  };
+
+  const selectAll = () => {
+    if (selectedInvoiceIds.size === filteredInvoices.length) {
+      setSelectedInvoiceIds(new Set());
+    } else {
+      setSelectedInvoiceIds(new Set(filteredInvoices.map((i) => i.id)));
+    }
+  };
 
   // Filter & Sort invoices
   const filteredInvoices = useMemo(() => {
@@ -147,6 +168,10 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
           const invDate = new Date(inv.date);
           return invDate >= thirtyDaysAgo;
         }
+        if (dateFilter === 'custom') {
+          if (!customStartDate || !customEndDate) return true;
+          return inv.date >= customStartDate && inv.date <= customEndDate;
+        }
 
         return true; // 'all'
       })
@@ -167,6 +192,14 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
         if (sortBy === 'lowest') {
           return a.total - b.total;
         }
+        if (sortBy === 'status') {
+          if (a.status !== b.status) {
+            return a.status === 'paid' ? -1 : 1;
+          }
+          const dateCompare = (b.date || '').localeCompare(a.date || '');
+          if (dateCompare !== 0) return dateCompare;
+          return (b.time || '').localeCompare(a.time || '');
+        }
         return 0;
       });
   }, [invoices, searchQuery, dateFilter, statusFilter, sortBy]);
@@ -178,8 +211,10 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
     let pendingSales = 0;
     let paidCount = 0;
     let pendingCount = 0;
+    let totalItems = 0;
 
     filteredInvoices.forEach((inv) => {
+      totalItems += inv.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
       totalSales += inv.total;
       if (inv.status === 'pending') {
         pendingSales += inv.total;
@@ -190,8 +225,19 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
       }
     });
 
-    return { totalSales, paidSales, pendingSales, paidCount, pendingCount };
+    const avgInvoice = filteredInvoices.length > 0 ? totalSales / filteredInvoices.length : 0;
+    return { totalSales, paidSales, pendingSales, paidCount, pendingCount, totalItems, avgInvoice };
   }, [filteredInvoices]);
+
+  const selectedStats = useMemo(() => {
+    let paid = 0;
+    let pending = 0;
+    invoices.filter((inv) => selectedInvoiceIds.has(inv.id)).forEach((inv) => {
+      if (inv.status === 'pending') pending += inv.total;
+      else paid += inv.total;
+    });
+    return { paid, pending };
+  }, [invoices, selectedInvoiceIds]);
 
   const hasActiveFilters =
     searchQuery !== '' || dateFilter !== 'all' || statusFilter !== 'all' || sortBy !== 'newest';
@@ -199,8 +245,11 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
   const resetFilters = () => {
     setSearchQuery('');
     setDateFilter('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
     setStatusFilter('all');
     setSortBy('newest');
+    setSelectedInvoiceIds(new Set());
   };
 
   return (
@@ -315,6 +364,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
             <option value="oldest">الأقدم أولاً</option>
             <option value="highest">الأعلى مبلغاً</option>
             <option value="lowest">الأقل مبلغاً</option>
+            <option value="status">حسب الحالة (الدفع ثم الذمم)</option>
           </select>
         </div>
 
@@ -439,12 +489,62 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
             >
               هذا الشهر
             </button>
+
+            <button
+              id="filter-date-custom"
+              onClick={() => setDateFilter('custom')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                dateFilter === 'custom'
+                  ? 'bg-[#087A35] text-white shadow-2xs'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              فترة مخصصة
+            </button>
           </div>
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-top-1">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold focus:outline-none focus:border-[#087A35]"
+              />
+              <span className="text-gray-400 font-bold">إلى</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold focus:outline-none focus:border-[#087A35]"
+              />
+            </div>
+          )}
         </div>
       </div>
 
+
       {/* Financial Breakdown Summary Banner for Active Filters */}
       <div className="bg-[#F8FAFC] rounded-2xl p-3 border border-gray-200 text-xs space-y-1.5">
+        {selectedInvoiceIds.size > 0 && (
+          <div className="bg-[#087A35]/10 p-2 rounded-xl border border-[#087A35]/20 mb-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#087A35]">إجمالي المحددة ({selectedInvoiceIds.size}):</span>
+              <span className="font-extrabold text-[#087A35] text-sm bg-white px-2 py-0.5 rounded-lg">
+                {(selectedStats.paid + selectedStats.pending).toFixed(settings.decimalPlaces)} {settings.currency}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+              <div className="bg-white/50 p-1 rounded border border-[#087A35]/20 flex justify-between">
+                <span>نقد:</span>
+                <span>{selectedStats.paid.toFixed(settings.decimalPlaces)}</span>
+              </div>
+              <div className="bg-white/50 p-1 rounded border border-[#087A35]/20 flex justify-between">
+                <span>ذمم:</span>
+                <span>{selectedStats.pending.toFixed(settings.decimalPlaces)}</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between text-gray-700 font-bold">
           <span>
             نتائج الفلترة: <strong className="text-[#1A1A1A]">{filteredInvoices.length}</strong> فاتورة
@@ -475,7 +575,40 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
             </span>
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-2 pt-1 mt-1 border-t border-gray-200/60">
+          <div className="bg-blue-50/80 p-1.5 rounded-xl border border-blue-200/70 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-blue-800">
+              متوسط الفاتورة:
+            </span>
+            <span className="font-extrabold text-blue-800 text-xs">
+              {filteredStats.avgInvoice.toFixed(settings.decimalPlaces)} {settings.currency}
+            </span>
+          </div>
+          <div className="bg-purple-50/80 p-1.5 rounded-xl border border-purple-200/70 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-purple-800">
+              الأصناف المباعة:
+            </span>
+            <span className="font-extrabold text-purple-800 text-xs">
+              {filteredStats.totalItems} صنف
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Select All Row */}
+      {filteredInvoices.length > 0 && (
+        <div className="flex items-center justify-between px-2">
+          <label className="flex items-center gap-2 text-xs font-bold text-gray-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={selectedInvoiceIds.size === filteredInvoices.length && filteredInvoices.length > 0}
+              onChange={selectAll}
+              className="w-4 h-4 text-[#087A35] rounded border-gray-300 focus:ring-[#087A35]"
+            />
+            تحديد الكل ({filteredInvoices.length})
+          </label>
+        </div>
+      )}
 
       {/* Invoices List Table / Cards (High Density) */}
       {filteredInvoices.length === 0 ? (
@@ -501,6 +634,16 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
               className="p-3 hover:bg-gray-50/80 active:bg-gray-100 transition-colors cursor-pointer flex items-center justify-between gap-3 group"
             >
               <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={selectedInvoiceIds.has(inv.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    toggleSelection(inv.id);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 text-[#087A35] rounded border-gray-300 focus:ring-[#087A35] cursor-pointer shrink-0 mt-2"
+                />
                 <div className="w-8 h-8 rounded-lg bg-[#F0F9F4] text-[#087A35] flex items-center justify-center font-bold text-xs border border-[#087A35]/20 group-hover:bg-[#087A35] group-hover:text-white transition-colors shrink-0">
                   <Receipt className="w-4 h-4" />
                 </div>
@@ -616,6 +759,26 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
           ))}
         </div>
       )}
+      {/* Hidden printable container for selected invoices */}
+      <div
+        id="printable-selected-invoices"
+        className="print:static print:w-auto print:h-auto print:opacity-100 print:pointer-events-auto"
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '0',
+          width: '800px',
+          opacity: 1,
+          pointerEvents: 'none',
+          zIndex: -9999,
+        }}
+      >
+        <PrintableBatchInvoices
+          id="printable-selected-invoices-doc"
+          invoices={invoices.filter((inv) => selectedInvoiceIds.has(inv.id))}
+          settings={settings}
+        />
+      </div>
     </div>
   );
 };

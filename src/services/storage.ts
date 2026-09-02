@@ -18,6 +18,38 @@ const STORAGE_KEYS = {
   INVOICES: 'khudar_fruits_invoices_v1',
   SETTINGS: 'khudar_fruits_settings_v1',
   CUSTOMERS: 'khudar_fruits_customers_v1',
+  EXPENSES: 'khudar_fruits_expenses_v1',
+  DAILY_REPORTS: 'khudar_fruits_daily_reports_v1',
+};
+
+export const getStoredExpenses = (): Expense[] => {
+// ... existing code ...
+  return [];
+};
+
+export const saveStoredExpenses = (expenses: Expense[]): void => {
+// ... existing code ...
+};
+
+export const getStoredDailyReports = (): DailyReport[] => {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.DAILY_REPORTS);
+    if (data) {
+      const parsed: DailyReport[] = JSON.parse(data);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (err) {
+    console.error('Failed to load daily reports', err);
+  }
+  return [];
+};
+
+export const saveStoredDailyReports = (reports: DailyReport[]): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.DAILY_REPORTS, JSON.stringify(reports));
+  } catch (err) {
+    console.error('Failed to save daily reports', err);
+  }
 };
 
 export const INITIAL_CUSTOMERS: Customer[] = [

@@ -90,7 +90,6 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
       const custInvoices = invoices.filter((inv) => {
         if (inv.customerId && inv.customerId === c.id) return true;
         if (c.name && inv.customerName && inv.customerName.trim().toLowerCase() === c.name.trim().toLowerCase()) return true;
-        if (c.phone && inv.customerPhone && inv.customerPhone.replace(/\s+/g, '') === c.phone.replace(/\s+/g, '')) return true;
         return false;
       });
 
@@ -203,6 +202,16 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    // Check for duplicate name
+    const isDuplicate = customers.some(
+      (c) => c.id !== editingCustomer?.id && c.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert('عذراً، هذا الاسم موجود بالفعل. يرجى اختيار اسم مختلف.');
+      return;
+    }
 
     if (editingCustomer) {
       onUpdateCustomer({
@@ -938,7 +947,6 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
                 const custInvoices = invoices.filter((inv) => {
                   if (inv.customerId && inv.customerId === viewCustomerInvoices.id) return true;
                   if (inv.customerName && inv.customerName.trim().toLowerCase() === viewCustomerInvoices.name.trim().toLowerCase()) return true;
-                  if (viewCustomerInvoices.phone && inv.customerPhone && inv.customerPhone.replace(/\s+/g, '') === viewCustomerInvoices.phone.replace(/\s+/g, '')) return true;
                   return false;
                 });
 

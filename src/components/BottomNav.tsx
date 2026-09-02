@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveTab } from '../types';
-import { Home, Receipt, Plus, Carrot, MoreHorizontal, Tag, SlidersHorizontal, Settings, FileSpreadsheet, Users } from 'lucide-react';
+import { Home, Receipt, Plus, Carrot, MoreHorizontal, Tag, SlidersHorizontal, Settings, FileSpreadsheet, Users, Wallet } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: ActiveTab;
@@ -37,6 +37,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="px-3 py-1.5 border-b border-gray-100">
               <p className="text-[11px] font-bold text-gray-400">خيارات إضافية</p>
             </div>
+
+            <button
+              id="btn-more-journal"
+              onClick={() => handleTabClick('journal')}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-800 text-xs font-bold transition-colors text-right"
+            >
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                <Wallet className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[#1A1A1A] font-bold">دفتر اليومية</div>
+                <div className="text-[10px] text-gray-400">إدارة المصاريف وحساب الأرباح</div>
+              </div>
+            </button>
 
             <button
               id="btn-more-customers"

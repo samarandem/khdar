@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Product, Invoice, ShopSettings, ActiveTab, GoogleSheetsSyncStatus, Customer } from './types';
+import { Product, Invoice, ShopSettings, ActiveTab, GoogleSheetsSyncStatus, Customer, Expense } from './types';
 import {
   getStoredProducts,
   saveStoredProducts,
@@ -9,6 +9,10 @@ import {
   saveStoredSettings,
   getStoredCustomers,
   saveStoredCustomers,
+  getStoredExpenses,
+  saveStoredExpenses,
+  getStoredDailyReports,
+  saveStoredDailyReports,
   generateNextInvoiceId,
   resetAllData,
   resetProductsToOfficialCatalog,
@@ -48,6 +52,7 @@ import { CustomersScreen } from './components/CustomersScreen';
 import { EditPricesScreen } from './components/EditPricesScreen';
 import { TodayPricesScreen } from './components/TodayPricesScreen';
 import { SettingsScreen } from './components/SettingsScreen';
+import { DailyJournalScreen } from './components/DailyJournalScreen';
 import { LoginScreen } from './components/LoginScreen';
 import { getAuthSession, logoutSession } from './services/authService';
 
@@ -61,6 +66,8 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>(getStoredProducts);
   const [invoices, setInvoices] = useState<Invoice[]>(getStoredInvoices);
   const [customers, setCustomers] = useState<Customer[]>(getStoredCustomers);
+  const [expenses, setExpenses] = useState<Expense[]>(getStoredExpenses);
+  const [dailyReports, setDailyReports] = useState<DailyReport[]>(getStoredDailyReports);
   const [settings, setSettings] = useState<ShopSettings>(getStoredSettings);
 
   // Cloud Sync State
@@ -107,19 +114,32 @@ export default function App() {
     saveStoredCustomers(customers);
   }, [customers]);
 
-  // Customer Management Handlers
-  const handleAddCustomer = (custData: Omit<Customer, 'id' | 'createdAt'>) => {
-    const newCust: Customer = {
-      ...custData,
-      id: `cust-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0],
+  useEffect(() => {
+    saveStoredExpenses(expenses);
+  }, [expenses]);
+
+  useEffect(() => {
+    saveStoredDailyReports(dailyReports);
+  }, [dailyReports]);
+
+  const handleAddExpense = (expenseData: Omit<Expense, 'id'>) => {
+    const newExpense: Expense = {
+      ...expenseData,
+      id: `exp-${Date.now()}`,
     };
-    const updated = [newCust, ...customers];
-    setCustomers(updated);
-    saveStoredCustomers(updated);
-    if (isCloudConnected()) {
-      autoSyncCustomers(updated);
-    }
+    setExpenses([newExpense, ...expenses]);
+  };
+
+  const handleAddDailyReport = (reportData: Omit<DailyReport, 'id'>) => {
+    const newReport: DailyReport = {
+      ...reportData,
+      id: `rep-${Date.now()}`,
+    };
+    setDailyReports([newReport, ...dailyReports]);
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(expenses.filter((e) => e.id !== id));
   };
 
   const handleUpdateCustomer = (updatedCust: Customer) => {
@@ -887,20 +907,16 @@ export default function App() {
               />
             )}
 
-            {/* 7. Settings Screen */}
-            {activeTab === 'settings' && (
-              <SettingsScreen
-                settings={settings}
+            {/* 8. Daily Journal */}
+            {activeTab === 'journal' && (
+              <DailyJournalScreen
                 invoices={invoices}
-                products={products}
-                customers={customers}
-                onSaveSettings={handleSaveSettings}
-                onResetData={handleResetData}
-                onBatchUpdateProducts={handleBatchUpdateProducts}
-                onBatchUpdateCustomers={handleBatchUpdateCustomers}
-                onBatchUpdateInvoices={handleBatchUpdateInvoices}
-                onDataLoadedFromSheets={handleDataLoadedFromSheets}
-                onLogout={settings.requireLogin !== false ? handleLogout : undefined}
+                expenses={expenses}
+                dailyReports={dailyReports}
+                settings={settings}
+                onAddExpense={handleAddExpense}
+                onDeleteExpense={handleDeleteExpense}
+                onAddDailyReport={handleAddDailyReport}
               />
             )}
           </>

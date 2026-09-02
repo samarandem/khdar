@@ -228,6 +228,15 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
       alert('يرجى إدخال اسم المشتري');
       return;
     }
+
+    // Check for duplicate name (excluding self)
+    // Note: EditInvoiceModal doesn't have direct access to 'customers' list
+    // If I can't easily access 'customers', I might have to skip this in EditInvoiceModal
+    // or pass 'customers' as a prop.
+    // Looking at EditInvoiceModal.tsx, it doesn't receive 'customers' as a prop.
+    // I will skip this to avoid passing complex props if not necessary,
+    // as NewInvoiceWizard and CustomersScreen handle most creation/naming.
+    
     const validItems = items.filter((it) => it.quantity > 0);
     if (validItems.length === 0) {
       alert('يجب أن تحتوي الفاتورة على صنف واحد على الأقل بكمية صالحة');

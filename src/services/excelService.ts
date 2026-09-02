@@ -142,8 +142,7 @@ export const exportInvoicesToExcel = (
       const custInvoices = invoices.filter(
         (inv) =>
           (inv.customerId && inv.customerId === c.id) ||
-          (inv.customerName && inv.customerName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
-          (inv.customerPhone && c.phone && inv.customerPhone.trim() === c.phone.trim())
+          (inv.customerName && inv.customerName.trim().toLowerCase() === c.name.trim().toLowerCase())
       );
       const totalSpent = custInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
       return {

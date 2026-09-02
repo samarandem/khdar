@@ -73,7 +73,7 @@ export interface ShopSettings {
   password?: string;
 }
 
-export type ActiveTab = 'home' | 'invoices' | 'new-invoice' | 'products' | 'customers' | 'more' | 'today-prices' | 'edit-prices' | 'settings';
+export type ActiveTab = 'home' | 'invoices' | 'new-invoice' | 'products' | 'customers' | 'more' | 'today-prices' | 'edit-prices' | 'settings' | 'journal';
 
 export interface GoogleSheetsSyncStatus {
   isConnected: boolean;
@@ -86,4 +86,22 @@ export interface GoogleSheetsSyncStatus {
   error?: string;
   userEmail?: string;
   autoSyncEnabled?: boolean;
+}
+
+export interface Expense {
+  id: string;
+  date: string;
+  amount: number;
+  description: string;
+  category: string;
+}
+
+export interface DailyReport {
+  id: string;
+  date: string;
+  startingCapital: number;
+  cashRevenue: number;
+  debtRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
 }

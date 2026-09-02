@@ -440,11 +440,18 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                 type="text"
                 value={customerName}
                 onChange={(e) => {
-                  setCustomerName(e.target.value);
-                  if (selectedCustomerId) {
-                    const match = customers.find(c => c.name.trim() === e.target.value.trim());
-                    if (!match) setSelectedCustomerId('');
+                  const newName = e.target.value;
+                  setCustomerName(newName);
+                  
+                  // Try to auto-match existing customer
+                  const match = customers.find(c => c.name.trim().toLowerCase() === newName.trim().toLowerCase());
+                  if (match) {
+                    setSelectedCustomerId(match.id);
+                    setCustomerPhone(match.phone || '');
+                  } else {
+                    setSelectedCustomerId('');
                   }
+                  
                   if (customerNameError) setCustomerNameError('');
                 }}
                 placeholder="أدخل اسم المشتري (مثال: أحمد محمد)"
