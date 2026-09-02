@@ -122,7 +122,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
           if (val < 1) {
             return `${val.toFixed(3).replace(/\.?0+$/, '')} ${displayUnitLocal}`;
           }
-          return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(2).replace(/\.?0+$/, '')} ${displayUnitLocal}`;
+          return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(3).replace(/\.?0+$/, '')} ${displayUnitLocal}`;
         },
         stepLabel: `0.250 ${displayUnit}`,
         isWeight: true,
@@ -567,7 +567,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                 </span>
               </div>
               <div className="text-base font-black text-[#087A35] leading-tight mt-0.5">
-                {subtotal.toFixed(2)}{' '}
+                {subtotal.toFixed(3)}{' '}
                 <span className="text-xs font-normal text-gray-600">{settings.currency}</span>
               </div>
             </div>
@@ -832,7 +832,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                         <div className="flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded-lg border border-gray-200">
                           <span className="text-gray-500 font-medium">إجمالي الصنف:</span>
                           <span className="font-black text-[#087A35]">
-                            {selectedItem.total.toFixed(2)} {settings.currency}
+                            {selectedItem.total.toFixed(3)} {settings.currency}
                           </span>
                         </div>
                       </div>
@@ -851,7 +851,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                   الأصناف المحددة: <span className="text-[#087A35] font-black">{itemsCount}</span>
                 </div>
                 <div className="text-lg font-black text-[#087A35] leading-tight">
-                  {subtotal.toFixed(2)}{' '}
+                  {subtotal.toFixed(3)}{' '}
                   <span className="text-xs font-normal text-gray-500">
                     {settings.currency}
                   </span>
@@ -943,7 +943,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                   </div>
 
                   <div className="text-left font-black text-xs text-[#087A35]">
-                    {item.total.toFixed(2)}{' '}
+                    {item.total.toFixed(3)}{' '}
                     <span className="text-[10px] font-normal text-gray-500">
                       {settings.currency}
                     </span>
@@ -957,7 +957,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 font-medium">المجموع الفرعي:</span>
                 <span className="font-bold text-[#1A1A1A]">
-                  {subtotal.toFixed(2)} {settings.currency}
+                  {subtotal.toFixed(3)} {settings.currency}
                 </span>
               </div>
 
@@ -1005,7 +1005,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F0F9F4] border border-[#087A35]/30">
                 <span className="font-bold text-gray-800">الإجمالي النهائي:</span>
                 <span className="font-black text-lg text-[#087A35]">
-                  {grandTotal.toFixed(2)}{' '}
+                  {grandTotal.toFixed(3)}{' '}
                   <span className="text-xs font-semibold text-gray-600">
                     {settings.currency}
                   </span>

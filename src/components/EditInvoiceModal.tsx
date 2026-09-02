@@ -469,7 +469,7 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
                         الإجمالي
                       </span>
                       <div className="font-black text-xs text-[#087A35]">
-                        {item.total.toFixed(2)} {settings.currency}
+                        {item.total.toFixed(3)} {settings.currency}
                       </div>
                     </div>
                   </div>
@@ -483,7 +483,7 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-gray-600">المجموع الفرعي:</span>
               <span className="font-bold text-[#1A1A1A]">
-                {subtotal.toFixed(2)} {settings.currency}
+                {subtotal.toFixed(3)} {settings.currency}
               </span>
             </div>
 
@@ -557,7 +557,7 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
             <div className="flex items-center justify-between text-xs bg-[#F0F9F4] px-2.5 py-2 rounded-lg border border-[#087A35]/30">
               <span className="font-bold text-gray-800">الإجمالي النهائي:</span>
               <span className="font-black text-sm text-[#087A35]">
-                {grandTotal.toFixed(2)} {settings.currency}
+                {grandTotal.toFixed(3)} {settings.currency}
               </span>
             </div>
           </div>

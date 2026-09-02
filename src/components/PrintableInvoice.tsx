@@ -425,7 +425,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                         const totalVal = Number(item.total) || 0;
                         const qtyDisplay = `${qtyVal.toFixed(3).replace(/\.?0+$/, '')} ${item.unit || ''}`;
                         const priceDisplay = `${priceVal.toFixed(3)} ${settings.currency}`;
-                        const totalDisplay = `${totalVal.toFixed(2)} ${settings.currency}`;
+                        const totalDisplay = `${totalVal.toFixed(3)} ${settings.currency}`;
 
                         return (
                           <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
@@ -513,7 +513,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                           <span>المجموع الفرعي</span>
                         </span>
                         <span style={{ fontSize: '13px', fontWeight: '900', color: '#111827' }}>
-                          {(Number(invoice.subtotal ?? invoice.total) || 0).toFixed(2)} {settings.currency}
+                          {(Number(invoice.subtotal ?? invoice.total) || 0).toFixed(3)} {settings.currency}
                         </span>
                       </div>
 
@@ -524,7 +524,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             <span>خدمة التوصيل</span>
                           </span>
                           <span style={{ fontSize: '13px', fontWeight: '900', color: '#087A35' }}>
-                            + {(Number(invoice.deliveryFee) || 0).toFixed(2)} {settings.currency}
+                            + {(Number(invoice.deliveryFee) || 0).toFixed(3)} {settings.currency}
                           </span>
                         </div>
                       )}
@@ -536,7 +536,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             <span>الخصم</span>
                           </span>
                           <span style={{ fontSize: '13px', fontWeight: '900', color: '#b45309' }}>
-                            - {(Number(invoice.discount) || 0).toFixed(2)} {settings.currency}
+                            - {(Number(invoice.discount) || 0).toFixed(3)} {settings.currency}
                           </span>
                         </div>
                       )}
@@ -549,7 +549,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                           <span>الإجمالي الكلي المطلوب</span>
                         </span>
                         <span style={{ fontSize: '18px', fontWeight: '900', color: '#087A35' }}>
-                          {(Number(invoice.total) || 0).toFixed(2)} {settings.currency}
+                          {(Number(invoice.total) || 0).toFixed(3)} {settings.currency}
                         </span>
                       </div>
 

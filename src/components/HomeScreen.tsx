@@ -142,7 +142,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </span>
           </div>
           <div className="text-2xl font-black text-[#087A35] tracking-tight">
-            {todaySales.toFixed(2)}{' '}
+            {todaySales.toFixed(3)}{' '}
             <span className="text-xs font-normal text-gray-500">{settings.currency}</span>
           </div>
           <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1 font-medium">
@@ -442,7 +442,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </button>
                       </td>
                       <td className="py-2.5 px-3 text-left font-black text-sm text-[#087A35]">
-                        {inv.total.toFixed(2)}{' '}
+                        {inv.total.toFixed(3)}{' '}
                         <span className="text-[10px] font-normal text-gray-500">
                           {settings.currency}
                         </span>
@@ -543,7 +543,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <div className="flex items-center gap-2.5 shrink-0">
                     <div className="text-left flex flex-col items-end">
                       <div className="font-black text-sm text-[#087A35]">
-                        {inv.total.toFixed(2)}{' '}
+                        {inv.total.toFixed(3)}{' '}
                         <span className="text-[10px] font-normal text-gray-500">
                           {settings.currency}
                         </span>

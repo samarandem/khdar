@@ -450,7 +450,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
             نتائج الفلترة: <strong className="text-[#1A1A1A]">{filteredInvoices.length}</strong> فاتورة
           </span>
           <span>
-            المجموع الكلي: <strong className="text-[#087A35] font-black">{filteredStats.totalSales.toFixed(2)} {settings.currency}</strong>
+            المجموع الكلي: <strong className="text-[#087A35] font-black">{filteredStats.totalSales.toFixed(3)} {settings.currency}</strong>
           </span>
         </div>
 
@@ -461,7 +461,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
               مدفوع ({filteredStats.paidCount}):
             </span>
             <span className="font-extrabold text-[#087A35] text-xs">
-              {filteredStats.paidSales.toFixed(2)} {settings.currency}
+              {filteredStats.paidSales.toFixed(3)} {settings.currency}
             </span>
           </div>
 
@@ -471,7 +471,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
               ذمم ({filteredStats.pendingCount}):
             </span>
             <span className="font-extrabold text-amber-800 text-xs">
-              {filteredStats.pendingSales.toFixed(2)} {settings.currency}
+              {filteredStats.pendingSales.toFixed(3)} {settings.currency}
             </span>
           </div>
         </div>
@@ -534,7 +534,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
                 {/* Price & Status */}
                 <div className="text-left">
                   <div className="font-black text-sm text-[#087A35]">
-                    {inv.total.toFixed(2)}{' '}
+                    {inv.total.toFixed(3)}{' '}
                     <span className="text-[10px] font-normal text-gray-500">
                       {settings.currency}
                     </span>

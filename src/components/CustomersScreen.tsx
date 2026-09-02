@@ -233,7 +233,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
     }
     let messageText = `مرحباً ${customerName}، يسعدنا تواصلك مع ${settings.shopName || 'محلنا'}.`;
     if (debtAmount && debtAmount > 0) {
-      messageText = `مرحباً السيد/ة ${customerName}، تذكير محترم من ${settings.shopName || 'محلنا'}: توجد ذمم معلقة بقيمة (${debtAmount.toFixed(2)} ${settings.currency}). شاكرين تعاونكم الطيب.`;
+      messageText = `مرحباً السيد/ة ${customerName}، تذكير محترم من ${settings.shopName || 'محلنا'}: توجد ذمم معلقة بقيمة (${debtAmount.toFixed(3)} ${settings.currency}). شاكرين تعاونكم الطيب.`;
     }
     const message = encodeURIComponent(messageText);
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
@@ -400,7 +400,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </div>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-xl font-black text-gray-900">
-              {overallStats.grandTotalCustomerSpent.toFixed(2)}
+              {overallStats.grandTotalCustomerSpent.toFixed(3)}
             </span>
             <span className="text-[10px] font-bold text-gray-500">{settings.currency}</span>
           </div>
@@ -421,7 +421,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </div>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-xl font-black text-amber-900">
-              {overallStats.grandTotalPendingDebt.toFixed(2)}
+              {overallStats.grandTotalPendingDebt.toFixed(3)}
             </span>
             <span className="text-[10px] font-bold text-amber-700">{settings.currency}</span>
           </div>
@@ -442,7 +442,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </div>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-xl font-black text-emerald-900">
-              {overallStats.grandTotalPaid.toFixed(2)}
+              {overallStats.grandTotalPaid.toFixed(3)}
             </span>
             <span className="text-[10px] font-bold text-emerald-700">{settings.currency}</span>
           </div>
@@ -461,7 +461,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </div>
           <div className="flex items-baseline gap-1 mt-1">
             <span className="text-xl font-black text-gray-900">
-              {overallStats.avgSpentPerActiveCustomer.toFixed(2)}
+              {overallStats.avgSpentPerActiveCustomer.toFixed(3)}
             </span>
             <span className="text-[10px] font-bold text-gray-500">{settings.currency}</span>
           </div>
@@ -506,7 +506,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
                       </div>
 
                       <div className="text-left font-black text-emerald-800">
-                        {item.totalSpent.toFixed(2)} <span className="text-[10px] text-gray-500">{settings.currency}</span>
+                        {item.totalSpent.toFixed(3)} <span className="text-[10px] text-gray-500">{settings.currency}</span>
                       </div>
                     </div>
                   );
@@ -546,7 +546,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
 
                     <div className="flex items-center gap-2">
                       <div className="text-left font-black text-amber-900">
-                        {item.pendingDebt.toFixed(2)}{' '}
+                        {item.pendingDebt.toFixed(3)}{' '}
                         <span className="text-[10px] text-amber-700">{settings.currency}</span>
                       </div>
 
@@ -727,7 +727,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
 
                     {/* Total Spent */}
                     <td className="py-3 px-4 text-center font-black text-gray-900">
-                      {totalSpent.toFixed(2)}{' '}
+                      {totalSpent.toFixed(3)}{' '}
                       <span className="text-[10px] font-normal text-gray-400">{settings.currency}</span>
                     </td>
 
@@ -736,7 +736,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
                       {pendingDebt > 0 ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                          <span>{pendingDebt.toFixed(2)} {settings.currency}</span>
+                          <span>{pendingDebt.toFixed(3)} {settings.currency}</span>
                         </span>
                       ) : invoiceCount > 0 ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -980,7 +980,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
 
                         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-0 border-gray-200 pt-2 sm:pt-0">
                           <div className="text-left font-black text-emerald-900 text-base">
-                            {inv.total.toFixed(2)} <span className="text-xs text-gray-500">{settings.currency}</span>
+                            {inv.total.toFixed(3)} <span className="text-xs text-gray-500">{settings.currency}</span>
                           </div>
                           {onSelectCustomerInvoices && (
                             <button

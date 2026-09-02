@@ -1,0 +1,22 @@
+--- src/services/pdfService.ts
++++ src/services/pdfService.ts
+@@ -66,6 +66,9 @@
+         width: 100% !important;
+         max-width: 100% !important;
+         margin: 0 auto !important;
++        position: static !important;
++        left: auto !important;
++        top: auto !important;
+       }
+       #native-print-container * { 
+         overflow: visible !important; 
+@@ -210,6 +213,10 @@
+   tempContainer.style.overflow = 'visible'; // Bypass any scrollbars or hidden content
+ 
+   const element = originalElement.cloneNode(true) as HTMLElement;
++  element.style.position = 'relative';
++  element.style.left = 'auto';
++  element.style.top = 'auto';
++  element.style.transform = 'none';
+   tempContainer.appendChild(element);
+   document.body.appendChild(tempContainer);

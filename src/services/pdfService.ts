@@ -39,7 +39,7 @@ export const printHtmlElement = async (
   printStyle.innerHTML = `
     @page {
       size: A4 portrait;
-      margin: 10mm;
+      margin: 0;
     }
     @media print {
       body, html {
@@ -58,13 +58,23 @@ export const printHtmlElement = async (
         width: 100% !important; 
         max-width: 100% !important;
         margin: 0 !important; 
-        padding: 0 !important; 
+        padding: 10mm !important; 
+        box-sizing: border-box !important;
         background: #fff !important;
       }
       #native-print-container > * {
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+      }
+      #native-print-container .pdf-page,
+      #native-print-container [id^="printable-"] {
+        width: 100% !important;
+        max-width: 100% !important;
       }
       #native-print-container * { 
         overflow: visible !important; 
@@ -209,6 +219,10 @@ export const buildPdfDocument = async (
   tempContainer.style.overflow = 'visible'; // Bypass any scrollbars or hidden content
 
   const element = originalElement.cloneNode(true) as HTMLElement;
+  element.style.position = 'relative';
+  element.style.left = 'auto';
+  element.style.top = 'auto';
+  element.style.transform = 'none';
   tempContainer.appendChild(element);
   document.body.appendChild(tempContainer);
 
@@ -750,7 +764,7 @@ export const formatInvoiceForWhatsApp = (
   const itemsList = invoice.items
     .map(
       (item, idx) =>
-        `${idx + 1}. *${item.productName}*: ${(Number(item.quantity) || 0).toFixed(3)} ${item.unit || ''} × ${(Number(item.unitPrice) || 0).toFixed(3)} = *${(Number(item.total) || 0).toFixed(2)} ${settings.currency}*`
+        `${idx + 1}. *${item.productName}*: ${(Number(item.quantity) || 0).toFixed(3)} ${item.unit || ''} × ${(Number(item.unitPrice) || 0).toFixed(3)} = *${(Number(item.total) || 0).toFixed(3)} ${settings.currency}*`
     )
     .join('\n');
 
@@ -759,8 +773,8 @@ export const formatInvoiceForWhatsApp = (
   const subtotalVal = Number(invoice.subtotal ?? invoice.total) || 0;
   const totalVal = Number(invoice.total) || 0;
 
-  const deliveryLine = deliveryVal > 0 ? `\n🚚 خدمة التوصيل: ${deliveryVal.toFixed(2)} ${settings.currency}` : '';
-  const discountLine = discountVal > 0 ? `\n🏷️ الخصم: ${discountVal.toFixed(2)} ${settings.currency}` : '';
+  const deliveryLine = deliveryVal > 0 ? `\n🚚 خدمة التوصيل: ${deliveryVal.toFixed(3)} ${settings.currency}` : '';
+  const discountLine = discountVal > 0 ? `\n🏷️ الخصم: ${discountVal.toFixed(3)} ${settings.currency}` : '';
 
   const text = `
 🛒 *${settings.shopName}*
@@ -773,8 +787,8 @@ export const formatInvoiceForWhatsApp = (
 ${itemsList}
 
 ------------------------
-💵 المجموع: ${subtotalVal.toFixed(2)} ${settings.currency}${deliveryLine}${discountLine}
-💰 *الإجمالي النهائي: ${totalVal.toFixed(2)} ${settings.currency}*
+💵 المجموع: ${subtotalVal.toFixed(3)} ${settings.currency}${deliveryLine}${discountLine}
+💰 *الإجمالي النهائي: ${totalVal.toFixed(3)} ${settings.currency}*
 
 شكراً لتعاملكم معنا! 🍃
   `.trim();

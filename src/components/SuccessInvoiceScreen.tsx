@@ -45,7 +45,7 @@ export const SuccessInvoiceScreen: React.FC<SuccessInvoiceScreenProps> = ({
       try {
         await navigator.share({
           title: `فاتورة ${invoice.id} - ${settings.shopName}`,
-          text: `فاتورة بيع رقم ${invoice.id} بقيمة ${invoice.total.toFixed(2)} ${settings.currency} للمشتري ${invoice.customerName}`,
+          text: `فاتورة بيع رقم ${invoice.id} بقيمة ${invoice.total.toFixed(3)} ${settings.currency} للمشتري ${invoice.customerName}`,
         });
       } catch {
         handleShareWhatsApp();
@@ -92,7 +92,7 @@ export const SuccessInvoiceScreen: React.FC<SuccessInvoiceScreenProps> = ({
         <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-100">
           <span className="font-bold text-gray-800">الإجمالي النهائي:</span>
           <span className="font-black text-sm text-[#087A35]">
-            {invoice.total.toFixed(2)} {settings.currency}
+            {invoice.total.toFixed(3)} {settings.currency}
           </span>
         </div>
       </div>
