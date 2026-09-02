@@ -11,11 +11,62 @@ export const printHtmlElement = async (
   elementId?: string,
   docTitle?: string
 ): Promise<void> => {
-  if (elementId) {
-    await printPdfFromElement(elementId, docTitle);
+  if (!elementId) {
+    window.print();
     return;
   }
+  
+  const originalElement = document.getElementById(elementId);
+  if (!originalElement) {
+    window.print();
+    return;
+  }
+
+  const originalTitle = document.title;
+  if (docTitle) {
+    document.title = docTitle;
+  }
+
+  // Use native DOM printing by appending a clone and hiding everything else
+  const printContainer = document.createElement('div');
+  printContainer.id = 'native-print-container';
+  const clone = originalElement.cloneNode(true) as HTMLElement;
+  printContainer.appendChild(clone);
+  document.body.appendChild(printContainer);
+
+  const printStyle = document.createElement('style');
+  printStyle.id = 'native-print-style';
+  printStyle.innerHTML = `
+    @media print {
+      body > *:not(#native-print-container) { display: none !important; }
+      #native-print-container { 
+        display: block !important; 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+        margin: 0; 
+        padding: 0; 
+      }
+      #native-print-container * { 
+        overflow: visible !important; 
+        page-break-inside: auto;
+      }
+    }
+  `;
+  document.head.appendChild(printStyle);
+
+  // Wait for styles to apply
+  await new Promise(resolve => setTimeout(resolve, 300));
+
   window.print();
+
+  // Cleanup
+  document.body.removeChild(printContainer);
+  document.head.removeChild(printStyle);
+  if (docTitle) {
+    document.title = originalTitle;
+  }
 };
 
 export const printNativePDF = (): void => {
@@ -121,12 +172,26 @@ export interface PreparedPdfResult {
 export const buildPdfDocument = async (
   elementId: string
 ): Promise<PreparedPdfResult | null> => {
-  const element = document.getElementById(elementId);
-  if (!element) {
+  const originalElement = document.getElementById(elementId);
+  if (!originalElement) {
     console.error(`Element with id ${elementId} not found`);
     return null;
   }
-  console.log('PDF Element found:', element, 'Dimensions:', element.offsetWidth, element.offsetHeight);
+  
+  // Clone the element and place it in a temporary unconstrained container
+  const tempContainer = document.createElement('div');
+  tempContainer.style.position = 'absolute';
+  tempContainer.style.top = '0';
+  tempContainer.style.left = '-9999px'; // Render off-screen
+  tempContainer.style.width = '780px';
+  tempContainer.style.backgroundColor = '#ffffff';
+  tempContainer.style.overflow = 'visible'; // Bypass any scrollbars or hidden content
+
+  const element = originalElement.cloneNode(true) as HTMLElement;
+  tempContainer.appendChild(element);
+  document.body.appendChild(tempContainer);
+
+  console.log('PDF Element cloned:', element, 'Dimensions:', element.offsetWidth, element.offsetHeight);
 
   // Ensure fonts are loaded
   if (document.fonts) {
@@ -246,7 +311,7 @@ export const buildPdfDocument = async (
     // Wait briefly to ensure any layout shifts or animations finish
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    window.scrollTo(0, 0);
+    
 
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -279,8 +344,8 @@ export const buildPdfDocument = async (
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          scrollX: 0,
-          scrollY: 0,
+          
+          
           onclone: (clonedDoc) => {
             const style = clonedDoc.createElement('style');
             style.innerHTML = `
@@ -338,8 +403,8 @@ export const buildPdfDocument = async (
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        scrollX: 0,
-        scrollY: 0,
+        
+        
         onclone: (clonedDoc) => {
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
@@ -421,6 +486,9 @@ export const buildPdfDocument = async (
     console.error('Error in buildPdfDocument:', error);
     return null;
   } finally {
+    if (tempContainer && tempContainer.parentNode) {
+      tempContainer.parentNode.removeChild(tempContainer);
+    }
     window.scrollTo(originalScrollX, originalScrollY);
 
     if (originalImageSources) {

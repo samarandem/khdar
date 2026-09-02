@@ -1,0 +1,52 @@
+--- src/services/pdfService.ts
++++ src/services/pdfService.ts
+@@ -11,10 +11,46 @@
+   elementId?: string,
+   docTitle?: string
+ ): Promise<void> => {
+-  if (elementId) {
+-    await printPdfFromElement(elementId, docTitle);
++  if (!elementId) {
++    window.print();
+     return;
+   }
+-  window.print();
++  
++  const originalElement = document.getElementById(elementId);
++  if (!originalElement) {
++    window.print();
++    return;
++  }
++
++  const originalTitle = document.title;
++  if (docTitle) {
++    document.title = docTitle;
++  }
++
++  const printContainer = document.createElement('div');
++  printContainer.id = 'native-print-container';
++  const clone = originalElement.cloneNode(true) as HTMLElement;
++  printContainer.appendChild(clone);
++  document.body.appendChild(printContainer);
++
++  const printStyle = document.createElement('style');
++  printStyle.id = 'native-print-style';
++  printStyle.innerHTML = `
++    @media print {
++      body > *:not(#native-print-container) { display: none !important; }
++      #native-print-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
++      #native-print-container * { overflow: visible !important; }
++    }
++  `;
++  document.head.appendChild(printStyle);
++
++  await new Promise(resolve => setTimeout(resolve, 200));
++
++  window.print();
++
++  document.body.removeChild(printContainer);
++  document.head.removeChild(printStyle);
++  if (docTitle) {
++    document.title = originalTitle;
++  }
+ };
