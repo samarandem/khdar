@@ -126,6 +126,7 @@ export const buildPdfDocument = async (
     console.error(`Element with id ${elementId} not found`);
     return null;
   }
+  console.log('PDF Element found:', element, 'Dimensions:', element.offsetWidth, element.offsetHeight);
 
   // Ensure fonts are loaded
   if (document.fonts) {
@@ -267,6 +268,7 @@ export const buildPdfDocument = async (
 
         const targetWidth = pageEl.scrollWidth || pageEl.offsetWidth || 800;
         const targetHeight = pageEl.scrollHeight || pageEl.offsetHeight || 1120;
+        console.log('Rendering PDF page:', i, 'Width:', targetWidth, 'Height:', targetHeight);
 
         const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
         const renderScale = isMobile ? 2.0 : 3.0;
@@ -279,8 +281,6 @@ export const buildPdfDocument = async (
           logging: false,
           scrollX: 0,
           scrollY: 0,
-          width: targetWidth,
-          height: targetHeight,
           onclone: (clonedDoc) => {
             const style = clonedDoc.createElement('style');
             style.innerHTML = `
@@ -340,8 +340,6 @@ export const buildPdfDocument = async (
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        width: targetWidth,
-        height: targetHeight,
         onclone: (clonedDoc) => {
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
