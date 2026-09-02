@@ -30,13 +30,15 @@ export const PrintableBatchInvoices: React.FC<PrintableBatchInvoicesProps> = ({
           لا توجد فواتير مطابقة للطباعة
         </div>
       ) : (
-        invoices.map((inv, idx) => (
+        invoices.map((inv, idx) => {
+          const isLastInvoice = idx === invoices.length - 1;
+          return (
           <div
             key={inv.id || idx}
             style={{
-              pageBreakAfter: 'always',
-              breakAfter: 'page',
-              marginBottom: '20px',
+              pageBreakAfter: isLastInvoice ? 'auto' : 'always',
+              breakAfter: isLastInvoice ? 'auto' : 'page',
+              marginBottom: isLastInvoice ? '0' : '20px',
             }}
           >
             <PrintableInvoice
@@ -45,7 +47,7 @@ export const PrintableBatchInvoices: React.FC<PrintableBatchInvoicesProps> = ({
               id={`batch-invoice-item-${inv.id || idx}`}
             />
           </div>
-        ))
+        )})
       )}
     </div>
   );

@@ -39,22 +39,20 @@ export const printHtmlElement = async (
   printStyle.innerHTML = `
     @page {
       size: A4 portrait;
-      margin: 0;
+      margin: 0mm !important;
     }
     @media print {
       body, html {
         width: 100% !important;
-        height: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
+        height: auto !important;
       }
       body > *:not(#native-print-container) { display: none !important; }
       #native-print-container { 
         display: block !important; 
-        position: absolute; 
-        left: 0; 
-        top: 0; 
+        position: relative !important;
         width: 100% !important; 
         max-width: 100% !important;
         margin: 0 !important; 
