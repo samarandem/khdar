@@ -31,7 +31,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
   return (
     <div
       id={id}
-      className="bg-white text-[#1A1A1A] p-1 max-w-[800px] mx-auto select-none space-y-6 w-full"
+      className="bg-white text-[#1A1A1A] p-1 max-w-[800px] mx-auto select-none w-full"
       dir="rtl"
       style={{
         width: '100%',
@@ -56,12 +56,13 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
           return (
             <div
               key={pageIdx}
-              className="pdf-page bg-white p-6 space-y-4 flex flex-col justify-between mx-auto"
+              className="pdf-page bg-white p-6 flex flex-col justify-between mx-auto"
               style={{
                 width: '100%',
-                minHeight: '297mm',
+                minHeight: '296mm',
                 boxSizing: 'border-box',
                 pageBreakAfter: isLastPage ? 'auto' : 'always',
+                marginBottom: isLastPage ? '0' : '20px',
                 backgroundColor: '#ffffff',
                 display: 'flex',
                 flexDirection: 'column',

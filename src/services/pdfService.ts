@@ -69,13 +69,23 @@ export const printHtmlElement = async (
         top: auto !important;
         transform: none !important;
       }
-      #native-print-container .pdf-page,
-      #native-print-container [id^="printable-"] {
+      #native-print-container .pdf-page {
         width: 100% !important;
         max-width: 100% !important;
         min-height: 296mm !important;
-        padding: 10mm !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
+      }
+      /* Remove any extra margins/paddings from wrappers */
+      #native-print-container [id^="printable-"],
+      #native-print-container [id^="batch-invoice-item-"],
+      #native-print-container .batch-invoice-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+      }
+      #native-print-container .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+        margin-top: 0 !important;
       }
       #native-print-container * { 
         overflow: visible !important; 

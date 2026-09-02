@@ -16,7 +16,7 @@ export const PrintableBatchInvoices: React.FC<PrintableBatchInvoicesProps> = ({
   return (
     <div
       id={id}
-      className="bg-white text-[#1A1A1A] p-2 max-w-[800px] mx-auto rounded-3xl select-none space-y-6 w-full"
+      className="bg-white text-[#1A1A1A] p-2 max-w-[800px] mx-auto rounded-3xl select-none w-full"
       dir="rtl"
       style={{
         width: '100%',
@@ -35,6 +35,7 @@ export const PrintableBatchInvoices: React.FC<PrintableBatchInvoicesProps> = ({
           return (
           <div
             key={inv.id || idx}
+            className="batch-invoice-wrapper"
             style={{
               pageBreakAfter: isLastInvoice ? 'auto' : 'always',
               breakAfter: isLastInvoice ? 'auto' : 'page',
