@@ -31,6 +31,7 @@ import {
 interface NewInvoiceWizardProps {
   products: Product[];
   customers?: Customer[];
+  invoices?: Invoice[];
   settings: ShopSettings;
   onCancel: () => void;
   onInvoiceCreated: (invoice: Invoice) => void;
@@ -40,6 +41,7 @@ interface NewInvoiceWizardProps {
 export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
   products,
   customers = [],
+  invoices = [],
   settings,
   onCancel,
   onInvoiceCreated,
@@ -47,6 +49,27 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
 }) => {
   // Wizard Steps: 1 = Customer, 2 = Products, 3 = Review
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Sort customers by order frequency (most orders first)
+  const sortedCustomers = useMemo(() => {
+    if (!invoices || invoices.length === 0) return customers;
+
+    const orderCounts: Record<string, number> = {};
+    invoices.forEach((inv) => {
+      if (inv.customerId) {
+        orderCounts[inv.customerId] = (orderCounts[inv.customerId] || 0) + 1;
+      } else if (inv.customerName) {
+        const normalizedName = inv.customerName.trim().toLowerCase();
+        orderCounts[normalizedName] = (orderCounts[normalizedName] || 0) + 1;
+      }
+    });
+
+    return [...customers].sort((a, b) => {
+      const countA = (orderCounts[a.id] || 0) + (orderCounts[a.name.trim().toLowerCase()] || 0);
+      const countB = (orderCounts[b.id] || 0) + (orderCounts[b.name.trim().toLowerCase()] || 0);
+      return countB - countA;
+    });
+  }, [customers, invoices]);
 
   // Step 1: Customer & Date/Time Details
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -65,14 +88,57 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
   const [activeCategory, setActiveCategory] = useState<ProductCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Step 3: Review & Discount & Delivery Fee & Notes
+// Step 3: Review & Discount & Delivery Fee & Notes
   const [deliveryFeeStr, setDeliveryFeeStr] = useState<string>('');
   const [discountStr, setDiscountStr] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [invoicePaymentType, setInvoicePaymentType] = useState<'cash' | 'debt'>('cash');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Quick weight presets in Kg
-  const quickWeightPresets = [0.250, 0.500, 0.750, 1.000, 1.500, 2.000];
+  // Unit-specific configurations for step and preset buttons
+  const getUnitConfig = (unit: string) => {
+    const norm = (unit || '').trim().toLowerCase();
+    const isWeight = 
+      norm === '' ||
+      norm === 'كغ' ||
+      norm === 'كغم' ||
+      norm === 'كيلو' ||
+      norm === 'كجم' ||
+      norm === 'كيلوجرام' ||
+      norm === 'غم' ||
+      norm === 'غرام' ||
+      norm === 'جرام' ||
+      norm.includes('كغ') ||
+      norm.includes('كيلو') ||
+      norm.includes('كجم');
+    
+    if (isWeight) {
+      const displayUnit = unit || 'كغ';
+      return {
+        step: 0.250,
+        presets: [0.250, 0.500, 0.750, 1.000, 1.500, 2.000],
+        getLabel: (val: number, u: string) => {
+          const displayUnitLocal = u || 'كغ';
+          if (val < 1) {
+            return `${val.toFixed(3).replace(/\.?0+$/, '')} ${displayUnitLocal}`;
+          }
+          return `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(2).replace(/\.?0+$/, '')} ${displayUnitLocal}`;
+        },
+        stepLabel: `0.250 ${displayUnit}`,
+        isWeight: true,
+      };
+    } else {
+      return {
+        step: 1.0,
+        presets: [1, 2, 3, 5, 10, 20],
+        getLabel: (val: number, u: string) => {
+          return `${val.toFixed(0)} ${u || 'حبة'}`;
+        },
+        stepLabel: unit || 'حبة',
+        isWeight: false,
+      };
+    }
+  };
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
@@ -86,11 +152,19 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
     });
   }, [products, activeCategory, searchQuery]);
 
+  // State to hold raw string input of quantity for each product to allow typing decimal dots/zeros safely
+  const [wizardQtyInputs, setWizardQtyInputs] = useState<Record<string, string>>({});
+
   // Handle adding / updating quantity of a product
   const handleUpdateQuantity = (product: Product, newQty: number) => {
     const updated = new Map(selectedItems);
     if (newQty <= 0) {
       updated.delete(product.id);
+      setWizardQtyInputs(prev => {
+        const c = { ...prev };
+        delete c[product.id];
+        return c;
+      });
     } else {
       // Round to 3 decimals to avoid floating point issues
       const roundedQty = Math.round(newQty * 1000) / 1000;
@@ -105,22 +179,14 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
         unitPrice: product.price,
         total: itemTotal,
       });
+      setWizardQtyInputs(prev => ({ ...prev, [product.id]: String(roundedQty) }));
     }
     setSelectedItems(updated);
   };
 
   // Handle direct text change in quantity input
   const handleQuantityInputChange = (product: Product, val: string) => {
-    if (val === '' || val === '0') {
-      const updated = new Map(selectedItems);
-      updated.delete(product.id);
-      setSelectedItems(updated);
-      return;
-    }
-    const parsed = parseArabicFloat(val);
-    if (parsed > 0) {
-      const roundedQty = Math.round(parsed * 1000) / 1000;
-      const itemTotal = Math.round(roundedQty * product.price * 100) / 100;
+    if (val === '') {
       const updated = new Map(selectedItems);
       updated.set(product.id, {
         productId: product.id,
@@ -128,16 +194,32 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
         category: product.category,
         image: product.image,
         unit: product.unit,
-        quantity: roundedQty,
+        quantity: 0,
         unitPrice: product.price,
-        total: itemTotal,
+        total: 0,
       });
       setSelectedItems(updated);
+      return;
     }
+    const parsed = parseArabicFloat(val);
+    const roundedQty = isNaN(parsed) || parsed < 0 ? 0 : Math.round(parsed * 1000) / 1000;
+    const itemTotal = Math.round(roundedQty * product.price * 100) / 100;
+    const updated = new Map(selectedItems);
+    updated.set(product.id, {
+      productId: product.id,
+      productName: product.name,
+      category: product.category,
+      image: product.image,
+      unit: product.unit,
+      quantity: roundedQty,
+      unitPrice: product.price,
+      total: itemTotal,
+    });
+    setSelectedItems(updated);
   };
 
   // Calculate totals
-  const itemsArray = useMemo(() => Array.from(selectedItems.values()), [selectedItems]);
+  const itemsArray = useMemo(() => Array.from(selectedItems.values()).filter((item: InvoiceItem) => item.quantity > 0), [selectedItems]);
   const itemsCount = itemsArray.length;
   const subtotal = useMemo(() => {
     return itemsArray.reduce((sum, item) => sum + item.total, 0);
@@ -194,7 +276,8 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
       deliveryFee: parsedDeliveryFee > 0 ? Math.round(parsedDeliveryFee * 100) / 100 : undefined,
       discount: Math.round(parsedDiscount * 100) / 100,
       total: Math.round(grandTotal * 100) / 100,
-      status: 'paid',
+      status: invoicePaymentType === 'debt' ? 'pending' : 'paid',
+      paymentMethod: invoicePaymentType,
       notes: notes.trim() || undefined,
     };
 
@@ -322,7 +405,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                     const id = e.target.value;
                     setSelectedCustomerId(id);
                     if (id) {
-                      const found = customers.find((c) => c.id === id);
+                      const found = sortedCustomers.find((c) => c.id === id);
                       if (found) {
                         setCustomerName(found.name);
                         setCustomerPhone(found.phone || '');
@@ -333,7 +416,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                   className="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                 >
                   <option value="">-- كود العميل / اختر عميل مسجل --</option>
-                  {customers.map((c) => (
+                  {sortedCustomers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} {c.phone ? `(${c.phone})` : ''}
                     </option>
@@ -671,84 +754,90 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                   </div>
 
                   {/* Quantity & Weight Controls (When Selected) */}
-                  {isSelected && (
-                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-1.5 animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between gap-1.5">
-                        {/* Minus / Delete */}
-                        <button
-                          id={`btn-qty-minus-${product.id}`}
-                          onClick={() => {
-                            if (currentQty <= 0.250) {
-                              handleUpdateQuantity(product, 0);
-                            } else {
-                              handleUpdateQuantity(product, Math.max(0, currentQty - 0.250));
-                            }
-                          }}
-                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-700 flex items-center justify-center transition-colors active:scale-95 shrink-0"
-                          title={currentQty <= 0.250 ? 'حذف' : 'إنقاص'}
-                        >
-                          {currentQty <= 0.250 ? (
-                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                          ) : (
-                            <Minus className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                  {isSelected && (() => {
+                    const config = getUnitConfig(product.unit);
+                    return (
+                      <div className="mt-2 pt-2 border-t border-gray-100 space-y-1.5 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between gap-1.5">
+                          {/* Minus / Delete */}
+                          <button
+                            id={`btn-qty-minus-${product.id}`}
+                            onClick={() => {
+                              if (currentQty <= config.step) {
+                                handleUpdateQuantity(product, 0);
+                              } else {
+                                handleUpdateQuantity(product, Math.max(0, currentQty - config.step));
+                              }
+                            }}
+                            className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-700 flex items-center justify-center transition-colors active:scale-95 shrink-0"
+                            title={currentQty <= config.step ? 'حذف' : `إنقاص ${config.stepLabel}`}
+                          >
+                            {currentQty <= config.step ? (
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                            ) : (
+                              <Minus className="w-3.5 h-3.5" />
+                            )}
+                          </button>
 
-                        {/* Direct Decimal Input with 3 Decimal Places */}
-                        <div className="flex-1 relative flex items-center justify-center">
-                          <input
-                            id={`input-qty-${product.id}`}
-                            type="number"
-                            step="0.001"
-                            min="0.001"
-                            value={currentQty === 0 ? '' : currentQty}
-                            onChange={(e) => handleQuantityInputChange(product, e.target.value.replace(/[,،٫]/g, '.'))}
-                            className="w-full text-center py-1 px-2 font-black text-xs text-[#087A35] bg-white rounded-lg border border-[#087A35] focus:outline-none"
-                            placeholder="0.000"
-                          />
-                          <span className="absolute left-2 text-[10px] font-bold text-gray-400 pointer-events-none">
-                            {product.unit}
-                          </span>
+                          {/* Direct Decimal Input with 3 Decimal Places */}
+                          <div className="flex-1 relative flex items-center justify-center">
+                            <input
+                              id={`input-qty-${product.id}`}
+                              type="text"
+                              inputMode="decimal"
+                              value={wizardQtyInputs[product.id] !== undefined ? wizardQtyInputs[product.id] : (currentQty === 0 ? '' : String(currentQty))}
+                              onChange={(e) => {
+                                const cleaned = e.target.value.replace(/[,،٫]/g, '.');
+                                setWizardQtyInputs(prev => ({ ...prev, [product.id]: cleaned }));
+                                handleQuantityInputChange(product, cleaned);
+                              }}
+                              className="w-full text-center py-1 px-2 font-black text-xs text-[#087A35] bg-white rounded-lg border border-[#087A35] focus:outline-none"
+                              placeholder="0.000"
+                            />
+                            <span className="absolute left-2 text-[10px] font-bold text-gray-400 pointer-events-none">
+                              {product.unit}
+                            </span>
+                          </div>
+
+                          {/* Plus */}
+                          <button
+                            id={`btn-qty-plus-${product.id}`}
+                            onClick={() => handleUpdateQuantity(product, currentQty + config.step)}
+                            className="w-7 h-7 rounded-lg bg-[#087A35] hover:bg-[#0A8F3D] text-white flex items-center justify-center transition-colors active:scale-95 shrink-0"
+                            title={`زيادة ${config.stepLabel}`}
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
                         </div>
 
-                        {/* Plus */}
-                        <button
-                          id={`btn-qty-plus-${product.id}`}
-                          onClick={() => handleUpdateQuantity(product, currentQty + 0.250)}
-                          className="w-7 h-7 rounded-lg bg-[#087A35] hover:bg-[#0A8F3D] text-white flex items-center justify-center transition-colors active:scale-95 shrink-0"
-                          title="زيادة ربع كيلو"
-                        >
-                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </div>
+                        {/* Quick Weight Chips */}
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                          {config.presets.map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleUpdateQuantity(product, preset)}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors shrink-0 ${
+                                Math.abs(currentQty - preset) < 0.001
+                                  ? 'bg-[#087A35] text-white border-[#087A35]'
+                                  : 'bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200'
+                              }`}
+                            >
+                              {config.getLabel(preset, product.unit)}
+                            </button>
+                          ))}
+                        </div>
 
-                      {/* Quick Weight Chips */}
-                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                        {quickWeightPresets.map((preset) => (
-                          <button
-                            key={preset}
-                            type="button"
-                            onClick={() => handleUpdateQuantity(product, preset)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors shrink-0 ${
-                              Math.abs(currentQty - preset) < 0.001
-                                ? 'bg-[#087A35] text-white border-[#087A35]'
-                                : 'bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200'
-                            }`}
-                          >
-                            {preset >= 1 ? `${preset.toFixed(0)} كغ` : `${preset.toFixed(3)}`}
-                          </button>
-                        ))}
+                        {/* Item Subtotal Calculation */}
+                        <div className="flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded-lg border border-gray-200">
+                          <span className="text-gray-500 font-medium">إجمالي الصنف:</span>
+                          <span className="font-black text-[#087A35]">
+                            {selectedItem.total.toFixed(2)} {settings.currency}
+                          </span>
+                        </div>
                       </div>
-
-                      {/* Item Subtotal Calculation */}
-                      <div className="flex items-center justify-between text-[11px] bg-white px-2 py-1 rounded-lg border border-gray-200">
-                        <span className="text-gray-500 font-medium">إجمالي الصنف:</span>
-                        <span className="font-black text-[#087A35]">
-                          {selectedItem.total.toFixed(2)} {settings.currency}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -848,7 +937,7 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                         {item.productName}
                       </div>
                       <div className="text-[10px] text-gray-400 font-medium">
-                        {item.quantity.toFixed(3)} {item.unit} × {item.unitPrice.toFixed(3)} {settings.currency}
+                        {item.quantity % 1 === 0 ? item.quantity.toFixed(0) : item.quantity.toFixed(3).replace(/\.?0+$/, '')} {item.unit} × {item.unitPrice.toFixed(3)} {settings.currency}
                       </div>
                     </div>
                   </div>
@@ -921,6 +1010,40 @@ export const NewInvoiceWizard: React.FC<NewInvoiceWizardProps> = ({
                     {settings.currency}
                   </span>
                 </span>
+              </div>
+
+              {/* Payment Method / Status Clarification */}
+              <div className="border-t border-gray-100 pt-3.5 mt-2 space-y-2">
+                <span className="text-xs font-bold text-gray-500">حالة الدفع (طبيعة الفاتورة):</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    id="btn-pay-cash"
+                    onClick={() => setInvoicePaymentType('cash')}
+                    className={`py-2.5 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center gap-1 transition-all border ${
+                      invoicePaymentType === 'cash'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-500 shadow-2xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-sm">💵 نقدي</span>
+                    <span className="text-[10px] font-normal opacity-80">فاتورة نقدي</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="btn-pay-debt"
+                    onClick={() => setInvoicePaymentType('debt')}
+                    className={`py-2.5 px-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center gap-1 transition-all border ${
+                      invoicePaymentType === 'debt'
+                        ? 'bg-amber-50 text-amber-800 border-amber-500 shadow-2xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-sm">📝 ذمم</span>
+                    <span className="text-[10px] font-normal opacity-80">ذمم آجل</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

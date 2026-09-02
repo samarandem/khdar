@@ -969,7 +969,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
                                   : 'bg-amber-100 text-amber-800'
                               }`}
                             >
-                              {inv.status === 'paid' ? 'مدفوعة' : 'معلقة (ذمم)'}
+                              {inv.status === 'paid' ? 'مدفوعة' : 'معلقة ذمم'}
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1 flex items-center gap-3">

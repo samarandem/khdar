@@ -21,6 +21,24 @@ interface EditInvoiceModalProps {
   onSave: (updatedInvoice: Invoice) => void;
 }
 
+const getUnitStep = (unit: string): number => {
+  const norm = (unit || '').trim().toLowerCase();
+  const isWeight = 
+    norm === '' ||
+    norm === 'كغ' ||
+    norm === 'كغم' ||
+    norm === 'كيلو' ||
+    norm === 'كجم' ||
+    norm === 'كيلوجرام' ||
+    norm === 'غم' ||
+    norm === 'غرام' ||
+    norm === 'جرام' ||
+    norm.includes('كغ') ||
+    norm.includes('كيلو') ||
+    norm.includes('كجم');
+  return isWeight ? 0.250 : 1.0;
+};
+
 export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
   invoice,
   products,
@@ -52,14 +70,20 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
     const d = parseArabicFloat(invoice.discount);
     return d > 0 ? String(d) : (invoice.discount === 0 || invoice.discount === '0' ? '0' : '');
   });
+  const [invoicePaymentType, setInvoicePaymentType] = useState<'cash' | 'debt'>(invoice.status === 'pending' ? 'debt' : 'cash');
   const [showAddProductPicker, setShowAddProductPicker] = useState(false);
   const [addProductSearch, setAddProductSearch] = useState('');
+
+  // Raw text inputs for quantity and price in edit modal to prevent character stripping when typing "."
+  const [qtyInputs, setQtyInputs] = useState<Record<string, string>>({});
+  const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setCustomerName(invoice.customerName || '');
     setCustomerPhone(invoice.customerPhone || '');
     setInvoiceDate(invoice.date || new Date().toISOString().split('T')[0]);
     setInvoiceTime(invoice.time || '12:00');
+    setInvoicePaymentType(invoice.status === 'pending' ? 'debt' : 'cash');
     setItems(
       (invoice.items || []).map((it) => {
         const q = Math.round((parseArabicFloat(it.quantity) || 0) * 1000) / 1000;
@@ -72,6 +96,8 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
         };
       })
     );
+    setQtyInputs({});
+    setPriceInputs({});
     const fVal = parseArabicFloat(invoice.deliveryFee);
     setDeliveryFeeStr(fVal > 0 ? String(fVal) : (invoice.deliveryFee === 0 || invoice.deliveryFee === '0' ? '0' : ''));
     const dVal = parseArabicFloat(invoice.discount);
@@ -80,6 +106,7 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
 
   // Handle Item Quantity Change
   const handleQuantityChange = (index: number, newQty: number) => {
+    const item = items[index];
     if (newQty <= 0) {
       handleRemoveItem(index);
       return;
@@ -94,10 +121,15 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
       total,
     };
     setItems(updated);
+    if (item) {
+      setQtyInputs(prev => ({ ...prev, [item.productId]: String(roundedQty) }));
+    }
   };
 
   // Handle Quantity text input
   const handleQuantityTextChange = (index: number, textVal: string) => {
+    const item = items[index];
+    if (!item) return;
     const parsed = parseArabicFloat(textVal);
     const updated = [...items];
     if (parsed <= 0) {
@@ -120,6 +152,8 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
 
   // Handle Item Unit Price Change
   const handleUnitPriceChange = (index: number, textVal: string) => {
+    const item = items[index];
+    if (!item) return;
     const parsed = parseArabicFloat(textVal);
     const updated = [...items];
     const unitPrice = parsed < 0 ? 0 : Math.round(parsed * 1000) / 1000;
@@ -135,8 +169,21 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
 
   // Handle Remove Item
   const handleRemoveItem = (index: number) => {
+    const item = items[index];
     const updated = items.filter((_, idx) => idx !== index);
     setItems(updated);
+    if (item) {
+      setQtyInputs(prev => {
+        const c = { ...prev };
+        delete c[item.productId];
+        return c;
+      });
+      setPriceInputs(prev => {
+        const c = { ...prev };
+        delete c[item.productId];
+        return c;
+      });
+    }
   };
 
   // Handle Add Product from Catalog
@@ -156,6 +203,8 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
         total: Math.round(product.price * 100) / 100,
       };
       setItems([...items, newItem]);
+      setQtyInputs(prev => ({ ...prev, [product.id]: '1' }));
+      setPriceInputs(prev => ({ ...prev, [product.id]: String(product.price) }));
     }
     setShowAddProductPicker(false);
   };
@@ -215,6 +264,8 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
       deliveryFee: parsedDeliveryFee > 0 ? parsedDeliveryFee : undefined,
       discount: parsedDiscount,
       total: cleanGrandTotal,
+      status: invoicePaymentType === 'debt' ? 'pending' : 'paid',
+      paymentMethod: invoicePaymentType,
     };
 
     onSave(updatedInvoice);
@@ -360,7 +411,10 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => handleQuantityChange(idx, Math.max(0, item.quantity - 0.250))}
+                          onClick={() => {
+                            const step = getUnitStep(item.unit);
+                            handleQuantityChange(idx, Math.max(0, item.quantity - step));
+                          }}
                           className="w-6 h-6 rounded bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-xs"
                         >
                           -
@@ -368,14 +422,21 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
                         <input
                           type="text"
                           inputMode="decimal"
-                          value={item.quantity === 0 ? '' : item.quantity}
-                          onChange={(e) => handleQuantityTextChange(idx, e.target.value.replace(/[,،٫]/g, '.'))}
+                          value={qtyInputs[item.productId] !== undefined ? qtyInputs[item.productId] : (item.quantity === 0 ? '' : String(item.quantity))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[,،٫]/g, '.');
+                            setQtyInputs(prev => ({ ...prev, [item.productId]: val }));
+                            handleQuantityTextChange(idx, val);
+                          }}
                           placeholder="0.000"
                           className="w-full text-center py-0.5 px-1 text-xs font-black rounded bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#087A35] focus:outline-none"
                         />
                         <button
                           type="button"
-                          onClick={() => handleQuantityChange(idx, item.quantity + 0.250)}
+                          onClick={() => {
+                            const step = getUnitStep(item.unit);
+                            handleQuantityChange(idx, item.quantity + step);
+                          }}
                           className="w-6 h-6 rounded bg-[#F0F9F4] text-[#087A35] flex items-center justify-center font-bold text-xs border border-[#087A35]/30"
                         >
                           +
@@ -391,8 +452,12 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
                       <input
                         type="text"
                         inputMode="decimal"
-                        value={item.unitPrice === 0 ? '' : item.unitPrice}
-                        onChange={(e) => handleUnitPriceChange(idx, e.target.value.replace(/[,،٫]/g, '.'))}
+                        value={priceInputs[item.productId] !== undefined ? priceInputs[item.productId] : (item.unitPrice === 0 ? '' : String(item.unitPrice))}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[,،٫]/g, '.');
+                          setPriceInputs(prev => ({ ...prev, [item.productId]: val }));
+                          handleUnitPriceChange(idx, val);
+                        }}
                         placeholder="0.000"
                         className="w-full text-center py-1 px-1.5 text-xs font-bold rounded bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#087A35] focus:outline-none"
                       />
@@ -454,6 +519,38 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
                   className="w-20 py-0.5 px-2 text-left font-bold rounded bg-white border border-gray-200 focus:border-[#087A35] focus:outline-none"
                 />
                 <span>{settings.currency}</span>
+              </div>
+            </div>
+
+            {/* Payment Method / Status Clarification */}
+            <div className="border-t border-gray-100 pt-2.5 space-y-1.5">
+              <span className="text-[11px] font-bold text-gray-500">حالة الدفع (طبيعة الفاتورة):</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  id="btn-edit-pay-cash"
+                  onClick={() => setInvoicePaymentType('cash')}
+                  className={`py-2 px-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border ${
+                    invoicePaymentType === 'cash'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>💵 نقدي</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-edit-pay-debt"
+                  onClick={() => setInvoicePaymentType('debt')}
+                  className={`py-2 px-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border ${
+                    invoicePaymentType === 'debt'
+                      ? 'bg-amber-50 text-amber-800 border-amber-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>📝 ذمم</span>
+                </button>
               </div>
             </div>
 

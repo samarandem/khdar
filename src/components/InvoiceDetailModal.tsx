@@ -9,6 +9,7 @@ import {
   Download,
   MessageCircle,
   Receipt,
+  Loader2,
 } from 'lucide-react';
 import { generatePdfFromElement, formatInvoiceForWhatsApp, printHtmlElement } from '../services/pdfService';
 
@@ -30,9 +31,18 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   autoPrint = false,
 }) => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const handlePrint = async () => {
-    await printHtmlElement(`printable-invoice-container-${invoice.id}`);
+    setIsPrinting(true);
+    try {
+      await printHtmlElement(
+        `printable-invoice-container-${invoice.id}`,
+        `فاتورة_${invoice.id}_${invoice.customerName.replace(/\s+/g, '_')}`
+      );
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   React.useEffect(() => {
@@ -108,10 +118,20 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
             <button
               id="btn-invoice-print"
               onClick={handlePrint}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#087A35] hover:bg-[#0A8F3D] text-white text-xs font-bold transition-colors shadow-2xs"
+              disabled={isPrinting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#087A35] hover:bg-[#0A8F3D] text-white text-xs font-bold transition-all shadow-2xs disabled:opacity-75 cursor-pointer disabled:cursor-not-allowed"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>طباعة الفاتورة</span>
+              {isPrinting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>جاري تجهيز الـ PDF وإرساله للطابعة...</span>
+                </>
+              ) : (
+                <>
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>طباعة الفاتورة</span>
+                </>
+              )}
             </button>
 
             <button

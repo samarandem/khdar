@@ -72,6 +72,11 @@ export default function App() {
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const activeTabRef = React.useRef<ActiveTab>('home');
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   // Modal & Flow States
   const [createdInvoiceForSuccess, setCreatedInvoiceForSuccess] = useState<Invoice | null>(null);
@@ -143,6 +148,10 @@ export default function App() {
     let isMounted = true;
 
     const initCloudPull = async () => {
+      if (activeTabRef.current === 'settings') {
+        // Skip background sync entirely while user is on the settings tab to prevent overwriting edits
+        return;
+      }
       try {
         // Fetch shared Google Sheets config and pull from Google Sheets if connected
         const sharedConfig = await fetchSharedSheetConfigFromServer();
@@ -838,6 +847,7 @@ export default function App() {
               <NewInvoiceWizard
                 products={products}
                 customers={customers}
+                invoices={invoices}
                 settings={settings}
                 nextInvoiceId={nextInvoiceId}
                 onInvoiceCreated={handleInvoiceCreated}

@@ -19,6 +19,7 @@ import {
   X,
   Leaf,
   Truck,
+  Loader2,
 } from 'lucide-react';
 import { generatePdfFromElement, formatTodayPricesForWhatsApp, printHtmlElement } from '../services/pdfService';
 import { exportProductsToExcel, importProductsFromExcel } from '../services/excelService';
@@ -40,12 +41,28 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
   onResetOfficialPrices,
 }) => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [excelSuccess, setExcelSuccess] = useState(false);
   const [isProcessingImport, setIsProcessingImport] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [printFilter, setPrintFilter] = useState<'all' | 'vegetables' | 'fruits' | 'available'>('all');
+
   const activeProducts = products.filter((p) => p.active);
+
+  const displayedProducts = activeProducts.filter((p) => {
+    if (printFilter === 'vegetables') {
+      return normalizeCategory(p.category) === 'vegetables' || normalizeCategory(p.category) === 'herbs';
+    }
+    if (printFilter === 'fruits') {
+      return normalizeCategory(p.category) === 'fruits';
+    }
+    if (printFilter === 'available') {
+      return p.price > 0;
+    }
+    return true;
+  });
 
   const todayDateFormatted = new Date().toLocaleDateString('ar-JO', {
     weekday: 'long',
@@ -67,17 +84,25 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
   };
 
   const handleDownloadExcel = () => {
-    exportProductsToExcel(activeProducts, `${(settings.todayPricesTitle || 'أسعار_اليوم').replace(/\s+/g, '_')}_${settings.shopName.replace(/\s+/g, '_')}`);
+    exportProductsToExcel(displayedProducts, `${(settings.todayPricesTitle || 'أسعار_اليوم').replace(/\s+/g, '_')}_${settings.shopName.replace(/\s+/g, '_')}`);
     setExcelSuccess(true);
     setTimeout(() => setExcelSuccess(false), 3000);
   };
 
   const handlePrint = async () => {
-    await printHtmlElement('printable-today-prices-doc');
+    setIsPrinting(true);
+    try {
+      await printHtmlElement(
+        'printable-today-prices-doc',
+        `${(settings.todayPricesTitle || 'أسعار_اليوم').replace(/\s+/g, '_')}_${settings.shopName.replace(/\s+/g, '_')}`
+      );
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleShareWhatsApp = () => {
-    const encoded = formatTodayPricesForWhatsApp(products, settings);
+    const encoded = formatTodayPricesForWhatsApp(displayedProducts, settings);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
   };
 
@@ -131,7 +156,7 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-sm text-[#1A1A1A] leading-tight">
-                {settings.todayPricesTitle || 'أسعار اليوم'} المعتمدة ({activeProducts.length} صنف)
+                {settings.todayPricesTitle || 'أسعار اليوم'} المعتمدة ({printFilter === 'all' ? `${activeProducts.length} صنف` : `${displayedProducts.length} من ${activeProducts.length} صنف`})
               </h2>
               <div className="text-[10px] text-[#087A35] font-bold flex items-center gap-1 mt-0.5">
                 <Calendar className="w-3 h-3 text-[#087A35]" />
@@ -203,6 +228,71 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
           </div>
         )}
 
+        {/* Filter Selection Row */}
+        <div className="flex flex-col gap-1.5 p-2 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="text-xs font-black text-gray-700 flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-[#087A35]" />
+            <span>فلترة الأصناف للطباعة والمشاركة:</span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setPrintFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-150 flex items-center gap-1 ${
+                printFilter === 'all'
+                  ? 'bg-[#087A35] text-white shadow-xs'
+                  : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+              }`}
+            >
+              <span>الكل</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${printFilter === 'all' ? 'bg-[#065F28] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {activeProducts.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setPrintFilter('vegetables')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-150 flex items-center gap-1 ${
+                printFilter === 'vegetables'
+                  ? 'bg-[#087A35] text-white shadow-xs'
+                  : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+              }`}
+            >
+              <span>خضار</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${printFilter === 'vegetables' ? 'bg-[#065F28] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {activeProducts.filter(p => normalizeCategory(p.category) === 'vegetables' || normalizeCategory(p.category) === 'herbs').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setPrintFilter('fruits')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-150 flex items-center gap-1 ${
+                printFilter === 'fruits'
+                  ? 'bg-[#087A35] text-white shadow-xs'
+                  : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+              }`}
+            >
+              <span>فواكه</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${printFilter === 'fruits' ? 'bg-[#065F28] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {activeProducts.filter(p => normalizeCategory(p.category) === 'fruits').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setPrintFilter('available')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-150 flex items-center gap-1 ${
+                printFilter === 'available'
+                  ? 'bg-[#087A35] text-white shadow-xs'
+                  : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+              }`}
+            >
+              <span>الأصناف الموجودة فقط</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${printFilter === 'available' ? 'bg-[#065F28] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {activeProducts.filter(p => p.price > 0).length}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Action Buttons Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-0.5">
           <button
@@ -236,10 +326,20 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
           <button
             id="btn-today-print"
             onClick={handlePrint}
-            className="py-2 px-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-colors flex items-center justify-center gap-1"
+            disabled={isPrinting}
+            className="py-2 px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>طباعة</span>
+            {isPrinting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#087A35]" />
+                <span>جاري التجهيز...</span>
+              </>
+            ) : (
+              <>
+                <Printer className="w-3.5 h-3.5" />
+                <span>طباعة</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -266,8 +366,8 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
             // 16 items per page fits cleanly within A4 height (1100px) with streamlined row heights and compact padding
             const ITEMS_PER_PAGE = 16;
             const chunks = [];
-            for (let i = 0; i < activeProducts.length; i += ITEMS_PER_PAGE) {
-              chunks.push(activeProducts.slice(i, i + ITEMS_PER_PAGE));
+            for (let i = 0; i < displayedProducts.length; i += ITEMS_PER_PAGE) {
+              chunks.push(displayedProducts.slice(i, i + ITEMS_PER_PAGE));
             }
             const chunksToRender = chunks.length > 0 ? chunks : [[]];
 

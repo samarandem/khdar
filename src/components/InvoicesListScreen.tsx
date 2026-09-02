@@ -368,7 +368,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              <span>ذمم (آجل)</span>
+              <span>ذمم آجل</span>
             </button>
           </div>
         </div>

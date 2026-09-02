@@ -90,7 +90,7 @@ export const SuccessInvoiceScreen: React.FC<SuccessInvoiceScreenProps> = ({
           <span className="font-bold text-[#1A1A1A]">{invoice.items.length} أصناف</span>
         </div>
         <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-100">
-          <span className="font-bold text-gray-800">الإجمالي المدفوع:</span>
+          <span className="font-bold text-gray-800">الإجمالي النهائي:</span>
           <span className="font-black text-sm text-[#087A35]">
             {invoice.total.toFixed(2)} {settings.currency}
           </span>

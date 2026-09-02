@@ -73,6 +73,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const [invoiceFilter, setInvoiceFilter] = useState<'all' | 'today' | 'yesterday'>('all');
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const filteredInvoices = useMemo(() => {
     if (invoiceFilter === 'today') return todayInvoices;
@@ -86,7 +87,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   }, [filteredInvoices]);
 
   const handlePrintFiltered = async () => {
-    await printHtmlElement('printable-daily-invoices-doc');
+    try {
+      setIsPrinting(true);
+      const titleName = invoiceFilter === 'today'
+        ? 'فواتير_اليوم'
+        : invoiceFilter === 'yesterday'
+        ? 'فواتير_الأمس'
+        : 'جميع_الفواتير';
+      await printHtmlElement('printable-daily-invoices-doc', `${titleName}_${todayStr}`);
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handlePdfFiltered = async () => {
@@ -333,12 +344,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={handlePrintFiltered}
-                  className="flex items-center gap-1 bg-[#087A35] hover:bg-[#07682d] text-white px-2 py-1 rounded-lg font-bold text-[11px] shadow-xs transition-all no-print whitespace-nowrap"
+                  disabled={isPrinting}
+                  className="flex items-center gap-1 bg-[#087A35] hover:bg-[#07682d] text-white px-2.5 py-1 rounded-lg font-bold text-[11px] shadow-xs transition-all no-print whitespace-nowrap disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                   title="طباعة الفواتير المعروضة"
                 >
-                  <Printer className="w-3 h-3" />
+                  {isPrinting ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Printer className="w-3 h-3" />
+                  )}
                   <span>
-                    {invoiceFilter === 'today'
+                    {isPrinting
+                      ? 'جاري التجهيز...'
+                      : invoiceFilter === 'today'
                       ? 'طباعة فواتير اليوم'
                       : invoiceFilter === 'yesterday'
                       ? 'طباعة فواتير الأمس'
@@ -408,12 +426,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                               ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200'
                               : 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
                           }`}
-                          title="اضغط لتغيير الحالة (مدفوعة / ذمم)"
+                          title="اضغط لتغيير الحالة"
                         >
                           {inv.status === 'pending' ? (
                             <>
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
-                              <span>ذمم (آجل)</span>
+                              <span>ذمم آجل</span>
                             </>
                           ) : (
                             <>
@@ -584,7 +602,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Printable container for consolidated batch invoices of today/yesterday/all */}
       <div
         id="printable-daily-invoices-doc"
-        className="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none print:static print:w-auto print:h-auto print:opacity-100 print:pointer-events-auto"
+        className="print:static print:w-auto print:h-auto print:opacity-100 print:pointer-events-auto"
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '0',
+          width: '800px',
+          opacity: 1,
+          pointerEvents: 'none',
+          zIndex: -9999,
+        }}
       >
         <PrintableBatchInvoices
           invoices={filteredInvoices}

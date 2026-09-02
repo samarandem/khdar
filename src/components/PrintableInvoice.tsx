@@ -312,7 +312,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                                 border: invoice.status === 'pending' ? '1px solid #f59e0b' : '1px solid #86efac',
                               }}
                             >
-                              {invoice.status === 'pending' ? 'ذمم (آجل)' : 'نقداً (مدفوعة)'}
+                              {invoice.status === 'pending' ? 'ذمم آجل' : 'نقدي'}
                             </span>
                           </div>
                         </div>
@@ -566,7 +566,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
                             border: invoice.status === 'pending' ? '1px solid #f59e0b' : '1px solid #86efac',
                           }}
                         >
-                          {invoice.status === 'pending' ? 'ذمم (آجل - على الحساب)' : 'نقداً (مدفوعة بالكامل)'}
+                          {invoice.status === 'pending' ? 'ذمم آجل على الحساب' : 'نقدي'}
                         </span>
                       </div>
                     </div>

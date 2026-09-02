@@ -3,6 +3,16 @@ import { INITIAL_PRODUCTS, INITIAL_INVOICES, DEFAULT_SETTINGS } from '../data/in
 import { parseArabicFloat } from '../utils/arabicNumbers';
 import { normalizeCategory } from '../utils/categoryUtils';
 
+export const ensureLeadingZero = (phone: any): string => {
+  if (!phone) return '';
+  const trimmed = String(phone).trim();
+  // If it's a 9-digit number starting with 7, 8, or 9, prepend '0'
+  if (/^[789]\d{8}$/.test(trimmed)) {
+    return '0' + trimmed;
+  }
+  return trimmed;
+};
+
 const STORAGE_KEYS = {
   PRODUCTS: 'khudar_fruits_products_v5',
   INVOICES: 'khudar_fruits_invoices_v1',
@@ -227,7 +237,7 @@ export const sanitizeInvoice = (inv: any): Invoice => {
     date: cleanDateString(inv.date),
     time: String(inv.time || '12:00'),
     customerName: String(inv.customerName || 'زبون عام'),
-    customerPhone: inv.customerPhone ? String(inv.customerPhone) : undefined,
+    customerPhone: inv.customerPhone ? ensureLeadingZero(inv.customerPhone) : undefined,
     subtotal,
     deliveryFee: deliveryFee > 0 ? deliveryFee : undefined,
     discount,
@@ -274,17 +284,32 @@ export const getStoredSettings = (): ShopSettings => {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     if (data) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+      const parsed = JSON.parse(data);
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        phone: ensureLeadingZero(parsed.phone || DEFAULT_SETTINGS.phone),
+        whatsapp: ensureLeadingZero(parsed.whatsapp || DEFAULT_SETTINGS.whatsapp),
+      };
     }
   } catch (err) {
     console.error('Failed to load settings from storage', err);
   }
-  return DEFAULT_SETTINGS;
+  return {
+    ...DEFAULT_SETTINGS,
+    phone: ensureLeadingZero(DEFAULT_SETTINGS.phone),
+    whatsapp: ensureLeadingZero(DEFAULT_SETTINGS.whatsapp),
+  };
 };
 
 export const saveStoredSettings = (settings: ShopSettings): void => {
   try {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    const cleaned = {
+      ...settings,
+      phone: ensureLeadingZero(settings.phone),
+      whatsapp: ensureLeadingZero(settings.whatsapp),
+    };
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(cleaned));
   } catch (err) {
     console.error('Failed to save settings', err);
   }
@@ -310,18 +335,19 @@ export const getStoredCustomers = (): Customer[] => {
     if (data) {
       const parsed: Customer[] = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.map(c => ({ ...c, phone: ensureLeadingZero(c.phone) }));
       }
     }
   } catch (err) {
     console.error('Failed to load customers from storage', err);
   }
-  return INITIAL_CUSTOMERS;
+  return INITIAL_CUSTOMERS.map(c => ({ ...c, phone: ensureLeadingZero(c.phone) }));
 };
 
 export const saveStoredCustomers = (customers: Customer[]): void => {
   try {
-    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+    const cleaned = customers.map(c => ({ ...c, phone: ensureLeadingZero(c.phone) }));
+    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(cleaned));
   } catch (err) {
     console.error('Failed to save customers', err);
   }

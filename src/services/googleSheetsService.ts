@@ -1,5 +1,5 @@
 import { Product, Invoice, ShopSettings, GoogleSheetsSyncStatus, Customer } from '../types';
-import { sanitizeInvoice } from './storage';
+import { sanitizeInvoice, ensureLeadingZero } from './storage';
 import { INITIAL_PRODUCTS } from '../data/initialData';
 import { parsePriceValue } from './excelService';
 import { parseArabicFloat } from '../utils/arabicNumbers';
@@ -1083,7 +1083,7 @@ export const fetchAllDataFromGoogleSheets = async (
         parsedCustomers.push({
           id: String(row[0] || `cust-${Date.now()}-${c}`),
           name: name,
-          phone: String(row[2] || ''),
+          phone: ensureLeadingZero(row[2] || ''),
           notes: row[3] ? String(row[3]) : undefined,
           address: row[4] ? String(row[4]) : undefined,
           createdAt: String(row[5] || new Date().toISOString().split('T')[0]),
@@ -1101,8 +1101,8 @@ export const fetchAllDataFromGoogleSheets = async (
         const val = row[1] !== undefined ? String(row[1]).trim() : '';
         if (key === 'اسم المحل' || key === 'shopName') parsedSettings.shopName = val;
         else if (key === 'العنوان الفرعي' || key === 'shopSubtitle') parsedSettings.shopSubtitle = val;
-        else if (key === 'الهاتف' || key === 'phone') parsedSettings.phone = val;
-        else if (key === 'واتساب' || key === 'whatsapp') parsedSettings.whatsapp = val;
+        else if (key === 'الهاتف' || key === 'phone') parsedSettings.phone = ensureLeadingZero(val);
+        else if (key === 'واتساب' || key === 'whatsapp') parsedSettings.whatsapp = ensureLeadingZero(val);
         else if (key === 'العنوان' || key === 'address') parsedSettings.address = val;
         else if (key === 'الشعار/الشعار اللفظي' || key === 'slogan') parsedSettings.slogan = val;
         else if (key === 'رابط اللوجو' || key === 'اللوجو' || key === 'لوجو' || key === 'logoUrl' || key === 'logo' || key === 'صورة اللوجو') parsedSettings.logoUrl = val;

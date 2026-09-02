@@ -5,19 +5,15 @@ import { preloadAndInlineImages } from '../utils/imageUtils';
 import { downloadBlobFile } from './excelService';
 
 /**
- * Trigger native browser system print for 100% vector-sharp, crystal-clear Arabic printing
- * directly opening the operating system's printer selection dialog (طابعات النظام)
+ * Trigger native browser system print by preparing the PDF and sending it to the printer
  */
-export const printHtmlElement = async (elementId?: string): Promise<void> => {
+export const printHtmlElement = async (
+  elementId?: string,
+  docTitle?: string
+): Promise<void> => {
   if (elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-      try {
-        await preloadAndInlineImages(element);
-      } catch (e) {
-        console.warn('Image preload error before print:', e);
-      }
-    }
+    await printPdfFromElement(elementId, docTitle);
+    return;
   }
   window.print();
 };
@@ -112,14 +108,23 @@ export function replaceBalancedBlocks(
  * Capture an HTML element and download as a high-definition A4 PDF
  * Guaranteed to preserve connected Arabic text and high-res layout
  */
-export const generatePdfFromElement = async (
-  elementId: string,
-  fileName: string = 'فاتورة'
-): Promise<boolean> => {
+export interface PreparedPdfResult {
+  pdf: jsPDF;
+  pageDataUrls: string[];
+  blob: Blob;
+  blobUrl: string;
+}
+
+/**
+ * Build and compile high-resolution PDF document from element with full styles, fonts, and images
+ */
+export const buildPdfDocument = async (
+  elementId: string
+): Promise<PreparedPdfResult | null> => {
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id ${elementId} not found`);
-    return false;
+    return null;
   }
 
   // Ensure fonts are loaded
@@ -246,6 +251,7 @@ export const generatePdfFromElement = async (
       compress: true,
     });
 
+    const pageDataUrls: string[] = [];
     const pages = Array.from(element.querySelectorAll('.pdf-page')) as HTMLElement[];
 
     if (pages.length > 0) {
@@ -286,6 +292,7 @@ export const generatePdfFromElement = async (
         });
 
         const imgData = canvas.toDataURL('image/png', 1.0);
+        pageDataUrls.push(imgData);
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -346,6 +353,7 @@ export const generatePdfFromElement = async (
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);
+      pageDataUrls.push(imgData);
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -398,13 +406,19 @@ export const generatePdfFromElement = async (
       }
     }
 
-    const pdfBlob = pdf.output('blob');
-    downloadBlobFile(pdfBlob, `${fileName}.pdf`, 'application/pdf');
-    return true;
+    pdf.autoPrint({ variant: 'non-conform' });
+    const blob = pdf.output('blob');
+    const blobUrl = URL.createObjectURL(blob);
+
+    return {
+      pdf,
+      pageDataUrls,
+      blob,
+      blobUrl,
+    };
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    window.print();
-    return false;
+    console.error('Error in buildPdfDocument:', error);
+    return null;
   } finally {
     window.scrollTo(originalScrollX, originalScrollY);
 
@@ -423,6 +437,216 @@ export const generatePdfFromElement = async (
         node.removeAttribute('style');
       }
     });
+  }
+};
+
+/**
+ * Capture an HTML element and download as a high-definition A4 PDF
+ */
+export const generatePdfFromElement = async (
+  elementId: string,
+  fileName: string = 'فاتورة'
+): Promise<boolean> => {
+  try {
+    const docResult = await buildPdfDocument(elementId);
+    if (!docResult) {
+      return false;
+    }
+    downloadBlobFile(docResult.blob, `${fileName}.pdf`, 'application/pdf');
+    URL.revokeObjectURL(docResult.blobUrl);
+    return true;
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    return false;
+  }
+};
+
+/**
+ * Prepare the PDF document and send it directly to the system printer (طابعة النظام)
+ */
+export const printPdfFromElement = async (
+  elementId: string,
+  docTitle: string = 'طباعة المستند'
+): Promise<boolean> => {
+  try {
+    const docResult = await buildPdfDocument(elementId);
+    if (!docResult) {
+      console.warn('Could not build PDF for printing, falling back to window.print()');
+      window.print();
+      return false;
+    }
+
+    const { pageDataUrls, blobUrl } = docResult;
+
+    return new Promise<boolean>((resolve) => {
+      const iframe = document.createElement('iframe');
+      iframe.id = `print-pdf-frame-${Date.now()}`;
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.zIndex = '-9999';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      document.body.appendChild(iframe);
+
+      const frameDoc = iframe.contentWindow?.document || iframe.contentDocument;
+      if (!frameDoc) {
+        window.print();
+        resolve(false);
+        return;
+      }
+
+      const pagesHtml = pageDataUrls
+        .map(
+          (dataUrl, index) =>
+            `<div class="page-container"><img src="${dataUrl}" class="page-render" alt="صفحة ${index + 1}" /></div>`
+        )
+        .join('\n');
+
+      frameDoc.open();
+      frameDoc.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8">
+          <title>${docTitle}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 0mm;
+            }
+            @media print {
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .page-container {
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-sizing: border-box !important;
+              }
+              .page-container:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
+              }
+              .page-render {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+              }
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+            }
+            .page-container {
+              width: 100%;
+              page-break-after: always;
+              break-after: page;
+              display: block;
+            }
+            .page-render {
+              width: 100%;
+              display: block;
+            }
+          </style>
+        </head>
+        <body>
+          ${pagesHtml}
+        </body>
+        </html>
+      `);
+      frameDoc.close();
+
+      const imgs = Array.from(frameDoc.querySelectorAll('img'));
+      let loadedImgs = 0;
+      const totalImgs = imgs.length;
+
+      const executePrint = () => {
+        try {
+          iframe.focus();
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          resolve(true);
+        } catch (err) {
+          console.warn('Iframe print execution error, attempting blob window:', err);
+          try {
+            const win = window.open(blobUrl, '_blank');
+            if (win) {
+              win.focus();
+              resolve(true);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+          window.print();
+          resolve(false);
+        } finally {
+          setTimeout(() => {
+            if (iframe.parentNode) {
+              document.body.removeChild(iframe);
+            }
+            URL.revokeObjectURL(blobUrl);
+          }, 6000);
+        }
+      };
+
+      if (totalImgs === 0) {
+        setTimeout(executePrint, 250);
+      } else {
+        imgs.forEach((img) => {
+          if (img.complete) {
+            loadedImgs++;
+            if (loadedImgs === totalImgs) {
+              setTimeout(executePrint, 250);
+            }
+          } else {
+            img.onload = () => {
+              loadedImgs++;
+              if (loadedImgs === totalImgs) {
+                setTimeout(executePrint, 250);
+              }
+            };
+            img.onerror = () => {
+              loadedImgs++;
+              if (loadedImgs === totalImgs) {
+                setTimeout(executePrint, 250);
+              }
+            };
+          }
+        });
+        setTimeout(() => {
+          if (loadedImgs < totalImgs) {
+            executePrint();
+          }
+        }, 2500);
+      }
+    });
+  } catch (error) {
+    console.error('Error preparing PDF for printing:', error);
+    window.print();
+    return false;
   }
 };
 
@@ -453,7 +677,7 @@ export const formatInvoiceForWhatsApp = (
 🧾 *فاتورة مبيعات رقم ${invoice.id}*
 📅 التاريخ: ${invoice.date}
 👤 المشتري: ${invoice.customerName}
-📌 حالة السداد: *${invoice.status === 'pending' ? 'ذمم (آجل)' : 'نقداً (مدفوعة)'}*
+📌 حالة السداد: *${invoice.status === 'pending' ? 'ذمم آجل' : 'نقدي'}*
 
 📋 *تفاصيل الفاتورة:*
 ${itemsList}
