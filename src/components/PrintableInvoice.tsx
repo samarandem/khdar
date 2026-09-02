@@ -59,7 +59,7 @@ export const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({
               className="pdf-page bg-white p-6 space-y-4 flex flex-col justify-between mx-auto"
               style={{
                 width: '100%',
-                minHeight: '297mm',
+                minHeight: '100%',
                 boxSizing: 'border-box',
                 pageBreakAfter: isLastPage ? 'auto' : 'always',
                 backgroundColor: '#ffffff',
