@@ -73,13 +73,9 @@ export const printHtmlElement = async (
       #native-print-container [id^="printable-"] {
         width: 100% !important;
         max-width: 100% !important;
-        min-height: 98vh !important;
-        padding: 5mm !important;
+        min-height: 296mm !important;
+        padding: 10mm !important;
         box-sizing: border-box !important;
-        page-break-inside: avoid !important;
-      }
-      #native-print-container .pdf-page:last-child {
-        page-break-after: auto !important;
       }
       #native-print-container * { 
         overflow: visible !important; 

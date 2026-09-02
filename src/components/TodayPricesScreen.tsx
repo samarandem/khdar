@@ -377,7 +377,7 @@ export const TodayPricesScreen: React.FC<TodayPricesScreenProps> = ({
                 className="pdf-page bg-white p-6 space-y-4 flex flex-col justify-between mx-auto"
                 style={{
                   width: '780px',
-                  minHeight: '100%',
+                  minHeight: '297mm',
                   boxSizing: 'border-box',
                   pageBreakAfter: 'always',
                   backgroundColor: '#ffffff',
