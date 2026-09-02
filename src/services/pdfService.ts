@@ -242,6 +242,9 @@ export const buildPdfDocument = async (
     // 2. Normalize and sanitize colors for OKLCH / modern CSS
     traverseAndApplyRgb(element);
 
+    // Wait briefly to ensure any layout shifts or animations finish
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     window.scrollTo(0, 0);
 
     const pdf = new jsPDF({
